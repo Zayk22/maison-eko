@@ -1,7 +1,7 @@
 # Maison Eko — Project State
 
 ## Status
-Batch 1.1 complete and pushed. Next: 1.2 (next.config.ts, globals.css, fonts.ts, layout.tsx).
+Batch 1.2 complete. Next: 1.3 (nav, footer, demo-notice component).
 
 ## Deploy
 - GitHub: https://github.com/Zayk22/maison-eko (private, main)
@@ -37,19 +37,23 @@ Batch 1.1 complete and pushed. Next: 1.2 (next.config.ts, globals.css, fonts.ts,
 ## Tooling decisions discovered during scaffold
 - vitest config is `.mts` so Vite loads it as ESM without requiring `"type": "module"` in package.json.
 - Vite 8 has native tsconfig paths support via `resolve.tsconfigPaths: true`; `vite-tsconfig-paths` was removed. If Batch 2.1 fails to resolve `@/*` imports, revert to the plugin.
-- cacheComponents in Next 16 defaults to off; it will be set false explicitly in next.config.ts in Batch 1.2 so no reader has to infer it.
+- cacheComponents in Next 16 defaults to off; it is set explicitly to false in next.config.ts so no reader has to infer it.
 
 ## Corrections to my own earlier advice
 - `jsx` stays `"react-jsx"` for Next 16; my earlier suggestion of `"preserve"` was wrong.
 - `@types/node` had to be upgraded from the scaffold's `^20` to `24` to satisfy Vitest 5's peer range.
 - `.gitignore` needed `!.env.example`; the scaffold ignores every `.env*` file.
-- The first `git push` after Batch 1.1 sent only the scaffold because the four files had not been committed. The follow-up commit `chore(batch 1.1)` fixes this. Going forward, every batch ends with `git add .`, `git commit`, `git push` in that order before Vercel is trusted to reflect the change.
+- The first `git push` after Batch 1.1 sent only the scaffold because the four files had not been committed. The follow-up commit `chore(batch 1.1)` fixed this. Going forward, every batch ends with `git add .`, `git commit`, `git push` in that order before Vercel is trusted to reflect the change.
 
 ## Files complete
 - tsconfig.json (strict, noUncheckedIndexedAccess, target ES2022)
 - vitest.config.mts (node environment, native tsconfig paths, clearMocks explicit)
 - .env.example (nine variables, all empty)
 - .gitignore (adds !.env.example)
+- next.config.ts (cacheComponents false)
+- src/app/globals.css (@theme tokens, base styles)
+- src/app/fonts.ts (Fraunces + Instrument Sans via next/font)
+- src/app/layout.tsx (fonts wired, demo notice inline)
 
 ## Next batch
-1.2 — next.config.ts, globals.css with @theme tokens, fonts.ts, layout.tsx with demo notice. Four files.
+1.3 — nav.tsx, footer.tsx, demo-notice.tsx. Three files; layout.tsx is updated to import DemoNotice instead of inlining it.
