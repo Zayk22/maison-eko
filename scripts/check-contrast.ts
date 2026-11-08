@@ -3,13 +3,19 @@ import { resolve } from "node:path";
 import {
   INK,
   BONE,
-  SEED_FRAGRANCES,
   parseColor,
   composite,
   contrastRatio,
   tintWash,
   type Rgba,
 } from "../src/lib/color";
+import { SEED_FRAGRANCES as SEED_DATA } from "../src/data/seed-data";
+
+// Derived locally because color.ts intentionally does not import seed-data.ts.
+const SEED_FRAGRANCES = SEED_DATA.map((f) => ({
+  name: f.name,
+  hex: f.accentHex,
+}));
 
 type TokenMap = Record<string, string>;
 
@@ -130,8 +136,6 @@ function main(): void {
 
   const mutedRaw = resolveToken(tokens, "--color-muted");
 
-  // Largest multiple of 5 at which, for all eight fragrances, ink on the
-  // tinted wash is >= 5.0 AND composited muted is >= 4.5.
   let chosenPercent: number | null = null;
   for (let p = 100; p >= 5; p -= 5) {
     let allInkPass = true;

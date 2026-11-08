@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   INK,
   BONE,
-  SEED_FRAGRANCES,
   CHOSEN_TINT_PERCENT,
   parseColor,
   composite,
@@ -11,6 +10,14 @@ import {
   relativeLuminance,
   tintWash,
 } from "./color";
+import { SEED_FRAGRANCES as SEED_DATA } from "@/data/seed-data";
+
+// Derived locally because color.ts intentionally does not import seed-data.ts,
+// to keep client bundles small. The test is free to import seed-data.
+const SEED_FRAGRANCES = SEED_DATA.map((f) => ({
+  name: f.name,
+  hex: f.accentHex,
+}));
 
 describe("parseColor", () => {
   it("parses six-digit hex", () => {
@@ -121,14 +128,10 @@ describe("tintWash", () => {
     expect(tintWash("#B8691F", BONE, 100)).toBe("#B8691F");
   });
 
-  // Skipped until CHOSEN_TINT_PERCENT is set to an architect-approved value.
-  // The constant starts as null and is filled in only after the contrast
-  // script output is pasted and the architect approves the number.
   it.skipIf(CHOSEN_TINT_PERCENT === null)(
     "every fragrance at CHOSEN_TINT_PERCENT passes ink >= 5.0 and muted >= 4.5",
     () => {
       const p = CHOSEN_TINT_PERCENT!;
-      // Mirrors --color-muted in @theme. Only used in this skipped test.
       const mutedRaw = parseColor("rgba(27, 20, 16, 0.62)");
       for (const f of SEED_FRAGRANCES) {
         const wash = tintWash(f.hex, BONE, p);

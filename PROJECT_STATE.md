@@ -1,7 +1,7 @@
 # Maison Eko — Project State
 
 ## Status
-Batch 2.3 complete. Batch 2.4 in review (fragrance descriptions awaiting architect approval). Next after approval: 2.5 (scent config and scoring), then 3.1 (Drizzle schema).
+Batch 2.4b accepted (pending commit). Batch 2.5 in review. Next: 3.1 (Drizzle schema).
 
 ## Deploy
 - GitHub: https://github.com/Zayk22/maison-eko (private, main)
@@ -17,9 +17,9 @@ Batch 2.3 complete. Batch 2.4 in review (fragrance descriptions awaiting archite
 - Tailwind CSS 4.3.5 (via @tailwindcss/postcss)
 
 ## Decisions locked (from architect answers 1-15)
-1. Flat shipping: 350000 kobo, one constant (`FLAT_SHIPPING_KOBO` in `src/lib/money.ts`). Shipping is zero on an empty cart, so a defensive caller cannot be charged shipping on nothing.
+1. Flat shipping: 350000 kobo, one constant (`FLAT_SHIPPING_KOBO` in `src/lib/money.ts`). Shipping is zero on an empty cart.
 2. Cancel allowed from pending, confirmed, paid. Every status update is conditional on current status inside the same transaction, so restock happens at most once.
-3. Rate limiter: Postgres table. Counter write outside the order transaction. IP primary, phone secondary. Tracking also limited per order number. Old rows cleaned up. Dev fallback when x-real-ip is absent. Fail closed for order creation, fail open for tracking. Both documented.
+3. Rate limiter: Postgres table. Counter write outside the order transaction. IP primary, phone secondary. Tracking also limited per order number. Old rows cleaned up. Dev fallback when x-real-ip is absent. Fail closed for order creation, fail open for tracking.
 4. Scroll story pins only at min-width 768px; below that, stacked whileInView sections. svh/dvh only. No sticky ancestor with overflow hidden.
 5. Sub-batches allowed; four-file cap still applies.
 6. Scent finder: no strength column in DB. Intensity 1-3 in scoring config only. Mood option E keeps three tags. Test asserts every fragrance wins at least one of 54 combinations.
@@ -32,99 +32,63 @@ Batch 2.3 complete. Batch 2.4 in review (fragrance descriptions awaiting archite
 13. Money parsing works on the decimal string manually; no floats. Order numbers use crypto.randomInt.
 14. README notes that per-order-number tracking limits can temporarily lock out the real customer.
 15. Page transitions: enter-only via template.tsx. No AnimatePresence exit. Under 250 ms.
-16. Contrast script reads the same token source as the CSS; runner is tsx. Script parses @theme from globals.css at runtime; no duplicated token list.
+16. Contrast script reads the same token source as the CSS; runner is tsx. Script parses @theme from globals.css at runtime.
 17. Colocated pure-function tests required for Zod schemas, stock reservation decisions, tracking verification, rate limiter counting, restock-on-cancel.
 
-## Accent contrast rule (locked 2026-11-08)
-Accent (`--color-accent` `#B4532A`) is allowed only for borders, icons, underlines and focus rings. Never used for text on `bg` or `surface`. Measured: accent on bg 4.36 (below 4.5 for normal text, above 3.0 for UI components). Nav and footer link hover: ink text plus an ember underline; same on `:focus-visible`.
-
-## Large-text threshold (WCAG 2.1 AA)
-Large text means 24 px (18 pt) regular or 18.66 px (14 pt) bold. Text that only passes 3:1 may be used at those sizes; anything smaller must clear 4.5:1.
-
-## Measured fragrance wash contrast (2026-11-08, from vitest color.test.ts run)
-```
-Fragrance     Hex       Chosen  Ratio   Ink     Bone    4.5   3.0
-Eko Nights    #B8691F   ink     4.40    4.40    3.61    FAIL  PASS
-Harmattan     #A8745A   ink     4.60    4.60    3.46    PASS  PASS
-Lagoon        #3F8FA6   ink     4.93    4.93    3.23    PASS  PASS
-Adire         #3B4A8F   bone    7.17    2.22    7.17    PASS  PASS
-Palm Wine     #D9B15B   ink     9.00    9.00    1.77    PASS  PASS
-Iroko         #6B6A3A   bone    4.90    3.25    4.90    PASS  PASS
-Night Bloom   #8A4F7D   bone    5.25    3.03    5.25    PASS  PASS
-First Rain    #7E9BA3   ink     6.16    6.16    2.58    PASS  PASS
-```
-Eko Nights (4.40) fails 4.5:1 for normal text on its raw colour and passes 3:1 for large text only. All other raw fragrance colours pass 4.5:1 with the better of ink or bone.
+## Accent contrast rule (locked)
+Accent (`--color-accent` `#B4532A`) is allowed only for borders, icons, underlines and focus rings. Never used for text on `bg` or `surface`. Measured: accent on bg 4.36. Nav and footer link hover: ink text plus ember underline; same on `:focus-visible`.
 
 ## Tinted wash (approved 2026-11-08)
 `CHOSEN_TINT_PERCENT = 10` in `src/lib/color.ts`. At 10%, for all eight fragrances, ink on the tinted wash clears 5.0:1 and composited muted clears 4.5:1. Binding condition at 15% is muted >= 4.5. Page-background washes use 10%. Raw fragrance colour reserved for bottle fills, swatches and large display type.
 
-Open decision for Batch 8: a stronger wash (up to 60%) using ink-only text and no muted on the wash is possible for the scent story scroll. Not built, not approved.
+Open decision for Batch 8: a stronger wash (up to 60%) using ink-only text for the scent story scroll. Not built, not approved.
 
-## Measured token contrast (`npm run check:contrast`, 2026-11-08)
-All text pairs and all non-text accent pairs pass with current thresholds.
-- ink on bg 15.91, on surface 17.18, on raised 18.20
-- muted on bg 4.85, on surface 4.99, on raised 5.09
-- accent (underline/icon/ring) on bg 4.36, on surface 4.71, on raised 4.99 (threshold 3.0)
-- bg on ink (primary button) 15.91
-- danger on bg 5.71, on surface 6.17, on raised 6.54
-- success on bg 5.50, on surface 5.94, on raised 6.29
-- focus ring (accent) on bg 4.36 (threshold 3.0)
-- border on bg 1.23 (informational, does not affect exit code)
+## Bundle boundary (2026-11-08)
+`src/lib/color.ts` does not import `src/data/seed-data.ts`. Client components that use `readableOn` or `tintWash` ship only the colour maths, not the eight descriptions. `src/lib/color.test.ts` and `scripts/check-contrast.ts` derive their own `{ name, hex }` view from `seed-data.ts`.
+
+## Scent finder scoring
+- Mood: +3 per matched tag, capped at +6.
+- Moment: exact +2; `anytime` fragrance +1 when user picks `day`/`evening`; user picking `anytime` gives +2 to an `anytime` fragrance, else 0.
+- Strength: exact +4, one step away +1, two steps away 0.
+- Tie-break: higher score, then earlier position in `SEED_FRAGRANCES`, then alphabetical slug.
+- Runner-up: always defined when there are >= 2 fragrances; never equal to best match.
+- Every fragrance must win at least one of the 54 combinations; the test enforces it.
+
+## Approved fragrance descriptions (2.4b)
+- Eko Nights: "Cardamom and bergamot open into incense and rose, then settle slowly into amber, vanilla and tonka. Warm, slow and made for after dark."
+- Harmattan: "Two peppers and saffron over cedarwood and vetiver, with a dry leather finish. It carries the dusty warmth of harmattan season, when the light turns hazy and the mornings run cool."
+- Lagoon, Adire, Palm Wine, Iroko, First Rain: approved as written in Batch 2.4.
+- Night Bloom: "Pear and lychee above tuberose and jasmine sambac, held together by white musk and sandalwood. Creamy, lush and unmistakable."
+No seeding until Batch 3.2.
 
 ## Border finding (open, before Batch 5)
-`--color-border` is `rgba(27, 20, 16, 0.1)`. Measured contrast against `bg` is 1.23:1. Fails 3:1 for form fields. Form inputs in checkout and admin will need a stronger border, decided before Batch 5.
-
-## Tooling decisions discovered during scaffold
-- vitest config is `.mts` so Vite loads it as ESM without requiring `"type": "module"` in package.json.
-- Vite 8 has native tsconfig paths support via `resolve.tsconfigPaths: true`.
-- `cacheComponents` is explicitly `false` in `next.config.ts`.
-- `turbopack.root` is explicitly set to `process.cwd()` in `next.config.ts`.
-- Tailwind v4 requires `postcss.config.mjs` with `@tailwindcss/postcss`.
-- `--radius-control` is defined in `@theme` as `10px`; `rounded-control` is valid.
-
-## Corrections to my own earlier advice
-- `jsx` stays `"react-jsx"` for Next 16.
-- `@types/node` had to be upgraded from `^20` to `24` to satisfy Vitest 5 peer range.
-- `.gitignore` needed `!.env.example`.
-- The first `git push` sent only the scaffold; subsequent batches commit and push before checking Vercel.
-- Turbopack does not pick up Tailwind v4 `@theme` without the PostCSS config.
-- My earlier hardcoded expectation for the gamma test (12.63) was wrong; the correct ratio is 4.478. The test asserts 4.47 to 4.49.
+`--color-border` is `rgba(27, 20, 16, 0.1)`. Measured contrast against `bg` is 1.23:1. Fails 3:1 for form fields. Decide stronger border before Batch 5.
 
 ## Test counts (from accepted runs, not predicted)
-- Batch 1.4b `npx vitest run src/lib/color.test.ts`: 18 passed | 1 skipped (19).
-- Batch 1.4c same command: 19 passed (19).
-- Batch 2.1 `npx vitest run src/lib/money.test.ts src/lib/phone.test.ts`: 20 passed (20), 2 files.
-- Batch 2.2 `npx vitest run src/lib/order-number.test.ts`: 10 passed (10), 1 file.
-- Batch 2.3 `npx vitest run src/lib/order.test.ts src/lib/stock.test.ts`: 65 passed (65), 2 files. Commit `f59adb5`.
-- Batch 2.4 counts pending next run.
-
-## Known TODOs for Batch 4
-- Mobile navigation menu using `@radix-ui/react-dialog`.
-- Cart control becomes a `button` that opens the cart drawer with an item-count badge announced via `aria-live`. Remove the `/cart` link.
-- Confirm accent hover visual once the nav is final.
-
-## Known TODOs (later batches)
-- **Logo:** architect is designing a real logo. Keep the text wordmark as a placeholder. Later batch: `Logo` component reused for nav, footer, favicon, og-image, JSON-LD.
-- **Input borders:** raise as a decision before Batch 5.
-- **Scent-story stronger wash:** up to 60% with ink-only text, decided in Batch 8.
-- **Optional:** left-align the footer on mobile.
+- Batch 1.4c `color.test.ts`: 19 passed (19).
+- Batch 2.1 `money.test.ts` + `phone.test.ts`: 20 passed (20), 2 files.
+- Batch 2.2 `order-number.test.ts`: 10 passed (10), 1 file.
+- Batch 2.3 `order.test.ts` + `stock.test.ts`: 65 passed (65), 2 files.
+- Batch 2.4b `color.test.ts`: 19 passed (19). `check:contrast` exit 0, chosen 10%, binding at 15% muted >= 4.5.
+- Batch 2.5 `scent-finder.test.ts`: counts pending next run.
 
 ## Files complete
 - `tsconfig.json`, `vitest.config.mts`, `.env.example`, `.gitignore`
 - `next.config.ts`, `globals.css`, `fonts.ts`, `postcss.config.mjs`
-- `src/app/layout.tsx`
-- `src/components/layout/nav.tsx`, `footer.tsx`
+- `src/app/layout.tsx`, `src/components/layout/nav.tsx`, `src/components/layout/footer.tsx`
 - `src/components/ui/demo-notice.tsx`
-- `src/lib/color.ts` (SEED_FRAGRANCES now derived from src/data/seed-data.ts)
-- `src/lib/color.test.ts` (19 active tests)
+- `src/lib/color.ts`, `color.test.ts` (19 active tests, no seed-data import)
 - `src/lib/money.ts`, `money.test.ts`
 - `src/lib/phone.ts`, `phone.test.ts`
 - `src/lib/order-number.ts`, `order-number.test.ts`
 - `src/lib/order.ts`, `order.test.ts`
 - `src/lib/stock.ts`, `stock.test.ts`
 - `src/lib/types.ts`
-- `src/data/seed-data.ts` (8 fragrances with descriptions; awaiting architect approval before seeding)
-- `scripts/check-contrast.ts`
+- `src/lib/scent-config.ts` (questions, options, intensity map)
+- `src/lib/scent-finder.ts` (pure scoring, deterministic tie-break)
+- `src/lib/scent-finder.test.ts` (counts pending next run)
+- `src/data/seed-data.ts` (8 fragrances; descriptions approved)
+- `scripts/check-contrast.ts` (derives its own seed view)
 
 ## Next batch
-2.5 — `src/lib/scent-config.ts` and `src/lib/scent-finder.ts` with a colocated test that proves every fragrance can be the best match for at least one of the 54 answer combinations, plus determinism and tie-break coverage. This batch depends on the 2.4 descriptions being approved because `scent-config.ts` imports the fragrance ordering from `seed-data.ts`.
+3.1 — `src/server/schema.ts` (Drizzle schema for stores, products, product_variants, orders, order_items, order_events, rate_limits) and `drizzle.config.ts`. Four files including a PROJECT_STATE update in the following batch.

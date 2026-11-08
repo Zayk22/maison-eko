@@ -29,16 +29,19 @@ export type SeedFragrance = {
  * fragrance unless the brief notes otherwise (it does not).
  *
  * This array is the single source of truth for fragrance data. It is
- * imported by src/lib/color.ts (name/hex view), by src/data/seed.ts
- * (the seeding script) and by src/lib/scent-config.ts (fragrance ordering
- * for tie-breaks). Any change here propagates to all three.
+ * imported by src/data/seed.ts (the seeding script), by
+ * src/lib/scent-config.ts (fragrance ordering for tie-breaks), and by
+ * src/lib/color.test.ts and scripts/check-contrast.ts (which derive a
+ * { name, hex } view locally). src/lib/color.ts deliberately does not
+ * import this file, so client components using readableOn/tintWash do
+ * not ship the descriptions.
  */
 export const SEED_FRAGRANCES: readonly SeedFragrance[] = [
   {
     name: "Eko Nights",
     slug: "eko-nights",
     description:
-      "Cardamom and bergamot open into incense and rose, then settle slowly into amber, vanilla and tonka. Warm and close, it belongs after dark.",
+      "Cardamom and bergamot open into incense and rose, then settle slowly into amber, vanilla and tonka. Warm, slow and made for after dark.",
     pyramid: {
       top: ["cardamom", "bergamot"],
       heart: ["incense", "rose"],
@@ -57,7 +60,7 @@ export const SEED_FRAGRANCES: readonly SeedFragrance[] = [
     name: "Harmattan",
     slug: "harmattan",
     description:
-      "Two peppers and saffron over cedarwood and vetiver. It smells like the harmattan wind that carries dust through the city and settles everything into stillness.",
+      "Two peppers and saffron over cedarwood and vetiver, with a dry leather finish. It carries the dusty warmth of harmattan season, when the light turns hazy and the mornings run cool.",
     pyramid: {
       top: ["black pepper", "pink pepper"],
       heart: ["cedarwood", "saffron"],
@@ -152,7 +155,7 @@ export const SEED_FRAGRANCES: readonly SeedFragrance[] = [
     name: "Night Bloom",
     slug: "night-bloom",
     description:
-      "Pear and lychee above tuberose and jasmine sambac, held together by white musk and sandalwood. Creamy and generous without shouting.",
+      "Pear and lychee above tuberose and jasmine sambac, held together by white musk and sandalwood. Creamy, lush and unmistakable.",
     pyramid: {
       top: ["pear", "lychee"],
       heart: ["tuberose", "jasmine sambac"],

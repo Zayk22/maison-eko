@@ -1,7 +1,10 @@
 // WCAG 2.1 relative luminance and contrast ratio.
 // sRGB gamma correction per https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
-
-import { SEED_FRAGRANCES as SEED_DATA } from "@/data/seed-data";
+//
+// This file deliberately does not import src/data/seed-data.ts.
+// Client components use readableOn and tintWash; importing seed-data here
+// would ship every product description to the browser. The colour test and
+// the contrast script derive their own { name, hex } view from seed-data.ts.
 
 export type Rgba = { r: number; g: number; b: number; a: number };
 
@@ -26,16 +29,6 @@ export const BONE = "#F4EFE8";
  * built and not approved. Revisit in Batch 8 if the story needs it.
  */
 export const CHOSEN_TINT_PERCENT = 10;
-
-/**
- * The eight seed fragrance accents, derived from src/data/seed-data.ts so
- * the catalogue and the contrast checks cannot drift. Tests and scripts
- * iterate this array for name/hex pairs.
- */
-export const SEED_FRAGRANCES = SEED_DATA.map((f) => ({
-  name: f.name,
-  hex: f.accentHex,
-}));
 
 export function parseColor(input: string): Rgba {
   const hex = input.trim();
