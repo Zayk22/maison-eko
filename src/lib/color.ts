@@ -10,14 +10,20 @@ export const INK = "#1B1410";
 export const BONE = "#F4EFE8";
 
 /**
- * Architect-approved tinted-wash percentage. null means "not yet approved";
- * tests and components must not apply any tint while this is null. The
- * contrast script computes the largest multiple of 5 at which, for all eight
- * fragrances, ink on the tinted wash clears 5.0:1 AND composited muted
- * clears 4.5:1. The architect approves or amends that number; it is then set
- * here as a decision, not an estimate.
+ * Architect-approved tinted-wash percentage for page backgrounds.
+ *
+ * Approved 2026-11-08 at 10%: for all eight fragrances, ink on the tinted
+ * wash clears 5.0:1 and composited muted clears 4.5:1. The binding
+ * condition measured at the next step up (15%) was muted >= 4.5.
+ *
+ * Page-background washes use this percent. Raw fragrance colour is reserved
+ * for bottle fills, swatches and large display type.
+ *
+ * Open decision for Batch 8: a stronger wash (up to 60%) using ink-only text
+ * with no muted on the wash is possible for the scent story scroll. Not
+ * built and not approved. Revisit in Batch 8 if the story needs it.
  */
-export const CHOSEN_TINT_PERCENT: number | null = null;
+export const CHOSEN_TINT_PERCENT = 10;
 
 // Seed fragrance accents, in the order they appear in the brief.
 // scripts/check-contrast.ts and src/lib/color.test.ts both read from this.

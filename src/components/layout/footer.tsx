@@ -1,5 +1,11 @@
 import Link from "next/link";
 
+const footerLink =
+  "inline-flex items-center min-h-11 px-2 rounded-control text-sm font-medium text-ink " +
+  "hover:underline hover:underline-offset-4 hover:decoration-accent hover:decoration-2 " +
+  "focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-4 focus-visible:decoration-accent focus-visible:decoration-2 " +
+  "transition-colors";
+
 export function Footer() {
   return (
     <footer className="border-t border-border bg-bg">
@@ -14,30 +20,18 @@ export function Footer() {
 
           <nav
             aria-label="Footer"
-            className="flex flex-wrap items-center justify-center gap-1 text-sm text-muted"
+            className="flex flex-wrap items-center justify-center gap-1 text-sm"
           >
-            <Link
-              href="/shop"
-              className="inline-flex items-center min-h-11 px-2 hover:text-ink transition-colors"
-            >
+            <Link href="/shop" className={footerLink}>
               Shop
             </Link>
-            <Link
-              href="/track-order"
-              className="inline-flex items-center min-h-11 px-2 hover:text-ink transition-colors"
-            >
+            <Link href="/track-order" className={footerLink}>
               Track Order
             </Link>
-            <Link
-              href="/about"
-              className="inline-flex items-center min-h-11 px-2 hover:text-ink transition-colors"
-            >
+            <Link href="/about" className={footerLink}>
               About
             </Link>
-            <Link
-              href="/contact"
-              className="inline-flex items-center min-h-11 px-2 hover:text-ink transition-colors"
-            >
+            <Link href="/contact" className={footerLink}>
               Contact
             </Link>
           </nav>

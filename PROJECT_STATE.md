@@ -1,7 +1,7 @@
 # Maison Eko — Project State
 
 ## Status
-Batch 1.4b in review. Next: 1.4c (footer focus-visible styles), then 2.1 (money, phone).
+Batch 1.4b complete. Batch 1.4c in review. Next: 1.4c commit, then 2.1 (money, phone).
 
 ## Deploy
 - GitHub: https://github.com/Zayk22/maison-eko (private, main)
@@ -55,14 +55,24 @@ First Rain    #7E9BA3   ink     6.16    6.16    2.58    PASS  PASS
 ```
 Eko Nights (4.40) fails 4.5:1 for normal text on its raw colour and passes 3:1 for large text only. All other raw fragrance colours pass 4.5:1 with the better of ink or bone.
 
-## Tinted-wash rule (pending approval)
-`tintWash(fragranceHex, boneHex, percent)` exists in `src/lib/color.ts`. The contrast script computes the largest multiple of 5 at which, for all eight fragrances, ink on the tinted wash is >= 5.0 AND composited muted is >= 4.5, and prints the binding condition. `CHOSEN_TINT_PERCENT` in `src/lib/color.ts` is `null` until the architect approves a percent. No component or test uses a tint while it is null. The percent will be written here as a decision, not an estimate.
+## Tinted wash (approved 2026-11-08)
+`CHOSEN_TINT_PERCENT = 10` in `src/lib/color.ts`. At 10%, for all eight fragrances, ink on the tinted wash clears 5.0:1 and composited muted clears 4.5:1. The binding condition at the next step up (15%) is muted >= 4.5. Page-background washes use 10%. Raw fragrance colour is reserved for bottle fills, swatches and large display type only.
 
-## Measured token contrast (npm run check:contrast, 2026-11-08)
-All text pairs and accent non-text pairs pass with the thresholds currently in the script. Key figures from the previous run: ink on bg 15.91, muted on bg 4.85, accent on surface 4.71, accent on bg 4.36 (non-text, threshold 3.0), bg on ink 15.91, danger on bg 5.71, success on bg 5.50. The current script may reclassify or re-threshold some pairs; the values in this section reflect the last pasted run and will be replaced with the next pasted run.
+Open decision for Batch 8: a stronger wash (up to 60%) using ink-only text and no muted on the wash is possible for the scent story scroll. Not built, not approved. Revisit in Batch 8 only if the story needs it.
+
+## Measured token contrast (`npm run check:contrast`, 2026-11-08)
+All text pairs and all non-text accent pairs pass with the thresholds in the current script. Confirmed figures from the accepted run:
+- ink on bg 15.91, on surface 17.18, on raised 18.20
+- muted on bg 4.85, on surface 4.99, on raised 5.09
+- accent (underline/icon/ring) on bg 4.36, on surface 4.71, on raised 4.99 (threshold 3.0)
+- bg on ink (primary button) 15.91
+- danger on bg 5.71, on surface 6.17, on raised 6.54
+- success on bg 5.50, on surface 5.94, on raised 6.29
+- focus ring (accent) on bg 4.36 (threshold 3.0)
+- border on bg 1.23 (informational, does not affect exit code)
 
 ## Border finding (open, before Batch 5)
-`--color-border` is `rgba(27, 20, 16, 0.1)`. Its measured contrast against `bg` is 1.23:1. This fails the 3:1 UI-component requirement for form fields. Form inputs in the checkout and admin will need a stronger border than the 10% token, decided before Batch 5. The script prints this figure informationally and does not fail on it.
+`--color-border` is `rgba(27, 20, 16, 0.1)`. Its measured contrast against `bg` is 1.23:1. This fails the 3:1 UI-component requirement for form fields. Form inputs in the checkout and admin will need a stronger border than the 10% token, decided before Batch 5.
 
 ## Tooling decisions discovered during scaffold
 - vitest config is `.mts` so Vite loads it as ESM without requiring `"type": "module"` in package.json.
@@ -80,6 +90,10 @@ All text pairs and accent non-text pairs pass with the thresholds currently in t
 - Turbopack does not pick up Tailwind v4 `@theme` without the PostCSS config.
 - My earlier hardcoded expectation for the gamma test (12.63) was wrong; the correct ratio is 4.478. The test asserts 4.47 to 4.49.
 
+## Test counts (from accepted runs, not predicted)
+- Batch 1.4b `npx vitest run src/lib/color.test.ts`: 18 passed | 1 skipped (19). The skipped test is the tinted-wash chosen-percent test, gated on `CHOSEN_TINT_PERCENT === null`.
+- Batch 1.4c sets `CHOSEN_TINT_PERCENT = 10`, so that test is no longer skipped. The post-run count will be recorded when the architect pastes the summary line.
+
 ## Known TODOs for Batch 4
 - Mobile navigation menu using `@radix-ui/react-dialog`.
 - Cart control becomes a `button` that opens the cart drawer with an item-count badge announced via `aria-live`. Remove the `/cart` link.
@@ -88,6 +102,7 @@ All text pairs and accent non-text pairs pass with the thresholds currently in t
 ## Known TODOs (later batches)
 - **Logo:** architect is designing a real logo. Keep the text wordmark as a placeholder. Later batch: `Logo` component (inline SVG, `currentColor`, `variant` prop) reused for nav, footer, favicon, og-image, JSON-LD.
 - **Input borders:** raise as a decision before Batch 5.
+- **Scent-story stronger wash:** up to 60% with ink-only text, decided in Batch 8.
 - **Optional:** left-align the footer on mobile to match the header.
 
 ## Files complete
@@ -95,11 +110,11 @@ All text pairs and accent non-text pairs pass with the thresholds currently in t
 - `next.config.ts`, `globals.css`, `fonts.ts`, `postcss.config.mjs`
 - `src/app/layout.tsx` (skip link, `#main-content`, flex column)
 - `src/components/layout/nav.tsx` (aligned, labelled, 44 px targets, ink text with ember underline on hover/focus)
-- `src/components/layout/footer.tsx` (aligned, labelled, 44 px targets, honest copy; focus-visible styles pending in 1.4c)
+- `src/components/layout/footer.tsx` (aligned, labelled, 44 px targets, ink text with ember underline on hover/focus; no accent text)
 - `src/components/ui/demo-notice.tsx`
-- `src/lib/color.ts` (parseColor, composite, relativeLuminance, contrastRatio, readableOn, tintWash, SEED_FRAGRANCES, INK, BONE, CHOSEN_TINT_PERCENT = null)
-- `src/lib/color.test.ts` (count pending run; measured regressions; tintWash endpoints active, chosen-percent test skipped until CHOSEN_TINT_PERCENT is set)
-- `scripts/check-contrast.ts` (parses @theme, drift check, accent non-text pairs counted toward exit, tinted-wash dual-rule with binding summary)
+- `src/lib/color.ts` (`CHOSEN_TINT_PERCENT = 10` approved; `SEED_FRAGRANCES`, `INK`, `BONE`; `parseColor`, `composite`, `relativeLuminance`, `contrastRatio`, `readableOn`, `tintWash`)
+- `src/lib/color.test.ts` (tintWash chosen-percent test now active; count pending next run)
+- `scripts/check-contrast.ts` (all pairs affect exit; dual-rule tinted wash with binding summary)
 
 ## Next batch
-1.4c — `src/components/layout/footer.tsx` with `focus-visible:underline ... decoration-accent` on each link, then commit and push. Then 2.1 — `money.ts` and `phone.ts` with colocated tests.
+2.1 — `src/lib/money.ts` and `src/lib/phone.ts`, each with colocated tests. Money parsing works on the decimal string manually; no floats. Phone normalises to `+234...` before storage and before tracking lookups.
