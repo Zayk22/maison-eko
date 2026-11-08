@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { fraunces, instrumentSans } from "./fonts";
+import { Nav } from "@/components/layout/nav";
+import { Footer } from "@/components/layout/footer";
+import { DemoNotice } from "@/components/ui/demo-notice";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,11 +20,11 @@ export default function RootLayout({
       lang="en"
       className={`${fraunces.variable} ${instrumentSans.variable}`}
     >
-      <body className="bg-bg text-ink font-sans antialiased">
-        <div className="border-b border-border bg-surface px-4 py-2 text-center text-xs text-muted">
-          Demo store. No real orders are fulfilled.
-        </div>
-        {children}
+      <body className="flex min-h-screen flex-col bg-bg text-ink font-sans antialiased">
+        <DemoNotice />
+        <Nav />
+        <main className="flex-grow">{children}</main>
+        <Footer />
       </body>
     </html>
   );
