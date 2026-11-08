@@ -1,7 +1,7 @@
 # Maison Eko — Project State
 
 ## Status
-Batch 2.1 in review. Next: 2.2 (order numbers and shared types).
+Batch 2.3 complete. Batch 2.4 in review (fragrance descriptions awaiting architect approval). Next after approval: 2.5 (scent config and scoring), then 3.1 (Drizzle schema).
 
 ## Deploy
 - GitHub: https://github.com/Zayk22/maison-eko (private, main)
@@ -17,7 +17,7 @@ Batch 2.1 in review. Next: 2.2 (order numbers and shared types).
 - Tailwind CSS 4.3.5 (via @tailwindcss/postcss)
 
 ## Decisions locked (from architect answers 1-15)
-1. Flat shipping: 350000 kobo, one constant (`FLAT_SHIPPING_KOBO` in `src/lib/money.ts`).
+1. Flat shipping: 350000 kobo, one constant (`FLAT_SHIPPING_KOBO` in `src/lib/money.ts`). Shipping is zero on an empty cart, so a defensive caller cannot be charged shipping on nothing.
 2. Cancel allowed from pending, confirmed, paid. Every status update is conditional on current status inside the same transaction, so restock happens at most once.
 3. Rate limiter: Postgres table. Counter write outside the order transaction. IP primary, phone secondary. Tracking also limited per order number. Old rows cleaned up. Dev fallback when x-real-ip is absent. Fail closed for order creation, fail open for tracking. Both documented.
 4. Scroll story pins only at min-width 768px; below that, stacked whileInView sections. svh/dvh only. No sticky ancestor with overflow hidden.
@@ -36,7 +36,7 @@ Batch 2.1 in review. Next: 2.2 (order numbers and shared types).
 17. Colocated pure-function tests required for Zod schemas, stock reservation decisions, tracking verification, rate limiter counting, restock-on-cancel.
 
 ## Accent contrast rule (locked 2026-11-08)
-Accent (`--color-accent` `#B4532A`) is allowed only for borders, icons, underlines and focus rings. Never used for text on `bg` or `surface`. Measured: accent on bg 4.36 (below 4.5 for normal text, above 3.0 for UI components). Nav and footer link hover: ink text plus an ember underline (`underline-offset-4`, `decoration-accent`); same on `:focus-visible`.
+Accent (`--color-accent` `#B4532A`) is allowed only for borders, icons, underlines and focus rings. Never used for text on `bg` or `surface`. Measured: accent on bg 4.36 (below 4.5 for normal text, above 3.0 for UI components). Nav and footer link hover: ink text plus an ember underline; same on `:focus-visible`.
 
 ## Large-text threshold (WCAG 2.1 AA)
 Large text means 24 px (18 pt) regular or 18.66 px (14 pt) bold. Text that only passes 3:1 may be used at those sizes; anything smaller must clear 4.5:1.
@@ -56,7 +56,7 @@ First Rain    #7E9BA3   ink     6.16    6.16    2.58    PASS  PASS
 Eko Nights (4.40) fails 4.5:1 for normal text on its raw colour and passes 3:1 for large text only. All other raw fragrance colours pass 4.5:1 with the better of ink or bone.
 
 ## Tinted wash (approved 2026-11-08)
-`CHOSEN_TINT_PERCENT = 10` in `src/lib/color.ts`. At 10%, for all eight fragrances, ink on the tinted wash clears 5.0:1 and composited muted clears 4.5:1. Binding condition at the next step up (15%) is muted >= 4.5. Page-background washes use 10%. Raw fragrance colour reserved for bottle fills, swatches and large display type only.
+`CHOSEN_TINT_PERCENT = 10` in `src/lib/color.ts`. At 10%, for all eight fragrances, ink on the tinted wash clears 5.0:1 and composited muted clears 4.5:1. Binding condition at 15% is muted >= 4.5. Page-background washes use 10%. Raw fragrance colour reserved for bottle fills, swatches and large display type.
 
 Open decision for Batch 8: a stronger wash (up to 60%) using ink-only text and no muted on the wash is possible for the scent story scroll. Not built, not approved.
 
@@ -72,11 +72,11 @@ All text pairs and all non-text accent pairs pass with current thresholds.
 - border on bg 1.23 (informational, does not affect exit code)
 
 ## Border finding (open, before Batch 5)
-`--color-border` is `rgba(27, 20, 16, 0.1)`. Measured contrast against `bg` is 1.23:1. This fails the 3:1 UI-component requirement for form fields. Form inputs in the checkout and admin will need a stronger border, decided before Batch 5.
+`--color-border` is `rgba(27, 20, 16, 0.1)`. Measured contrast against `bg` is 1.23:1. Fails 3:1 for form fields. Form inputs in checkout and admin will need a stronger border, decided before Batch 5.
 
 ## Tooling decisions discovered during scaffold
 - vitest config is `.mts` so Vite loads it as ESM without requiring `"type": "module"` in package.json.
-- Vite 8 has native tsconfig paths support via `resolve.tsconfigPaths: true`; `vite-tsconfig-paths` was removed.
+- Vite 8 has native tsconfig paths support via `resolve.tsconfigPaths: true`.
 - `cacheComponents` is explicitly `false` in `next.config.ts`.
 - `turbopack.root` is explicitly set to `process.cwd()` in `next.config.ts`.
 - Tailwind v4 requires `postcss.config.mjs` with `@tailwindcss/postcss`.
@@ -92,34 +92,39 @@ All text pairs and all non-text accent pairs pass with current thresholds.
 
 ## Test counts (from accepted runs, not predicted)
 - Batch 1.4b `npx vitest run src/lib/color.test.ts`: 18 passed | 1 skipped (19).
-- Batch 1.4c same command: 19 passed (19). The tinted-wash chosen-percent test is now active.
-- Batch 2.1 counts pending next run.
+- Batch 1.4c same command: 19 passed (19).
+- Batch 2.1 `npx vitest run src/lib/money.test.ts src/lib/phone.test.ts`: 20 passed (20), 2 files.
+- Batch 2.2 `npx vitest run src/lib/order-number.test.ts`: 10 passed (10), 1 file.
+- Batch 2.3 `npx vitest run src/lib/order.test.ts src/lib/stock.test.ts`: 65 passed (65), 2 files. Commit `f59adb5`.
+- Batch 2.4 counts pending next run.
 
 ## Known TODOs for Batch 4
 - Mobile navigation menu using `@radix-ui/react-dialog`.
 - Cart control becomes a `button` that opens the cart drawer with an item-count badge announced via `aria-live`. Remove the `/cart` link.
-- Confirm accent hover visual (ink text plus ember underline) once the nav is final.
+- Confirm accent hover visual once the nav is final.
 
 ## Known TODOs (later batches)
-- **Logo:** architect is designing a real logo. Keep the text wordmark as a placeholder. Later batch: `Logo` component (inline SVG, `currentColor`, `variant` prop) reused for nav, footer, favicon, og-image, JSON-LD.
+- **Logo:** architect is designing a real logo. Keep the text wordmark as a placeholder. Later batch: `Logo` component reused for nav, footer, favicon, og-image, JSON-LD.
 - **Input borders:** raise as a decision before Batch 5.
 - **Scent-story stronger wash:** up to 60% with ink-only text, decided in Batch 8.
-- **Optional:** left-align the footer on mobile to match the header.
+- **Optional:** left-align the footer on mobile.
 
 ## Files complete
 - `tsconfig.json`, `vitest.config.mts`, `.env.example`, `.gitignore`
 - `next.config.ts`, `globals.css`, `fonts.ts`, `postcss.config.mjs`
-- `src/app/layout.tsx` (skip link, `#main-content`, flex column)
-- `src/components/layout/nav.tsx` (aligned, labelled, 44 px targets, ink text with ember underline on hover/focus)
-- `src/components/layout/footer.tsx` (aligned, labelled, 44 px targets, same hover/focus treatment)
+- `src/app/layout.tsx`
+- `src/components/layout/nav.tsx`, `footer.tsx`
 - `src/components/ui/demo-notice.tsx`
-- `src/lib/color.ts` (parseColor, composite, relativeLuminance, contrastRatio, readableOn, tintWash, SEED_FRAGRANCES, INK, BONE, CHOSEN_TINT_PERCENT = 10)
+- `src/lib/color.ts` (SEED_FRAGRANCES now derived from src/data/seed-data.ts)
 - `src/lib/color.test.ts` (19 active tests)
-- `src/lib/money.ts` (FLAT_SHIPPING_KOBO, formatMoney, parseMoneyToKobo)
-- `src/lib/money.test.ts` (count pending next run)
-- `src/lib/phone.ts` (normalizePhone)
-- `src/lib/phone.test.ts` (count pending next run)
-- `scripts/check-contrast.ts` (parses @theme, drift check, all pairs affect exit, dual-rule tinted wash)
+- `src/lib/money.ts`, `money.test.ts`
+- `src/lib/phone.ts`, `phone.test.ts`
+- `src/lib/order-number.ts`, `order-number.test.ts`
+- `src/lib/order.ts`, `order.test.ts`
+- `src/lib/stock.ts`, `stock.test.ts`
+- `src/lib/types.ts`
+- `src/data/seed-data.ts` (8 fragrances with descriptions; awaiting architect approval before seeding)
+- `scripts/check-contrast.ts`
 
 ## Next batch
-2.2 — `src/lib/order-number.ts` using `crypto.randomInt`, and `src/lib/types.ts` for shared domain types, each with colocated tests where applicable.
+2.5 — `src/lib/scent-config.ts` and `src/lib/scent-finder.ts` with a colocated test that proves every fragrance can be the best match for at least one of the 54 answer combinations, plus determinism and tie-break coverage. This batch depends on the 2.4 descriptions being approved because `scent-config.ts` imports the fragrance ordering from `seed-data.ts`.

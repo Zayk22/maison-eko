@@ -1,6 +1,8 @@
 // WCAG 2.1 relative luminance and contrast ratio.
 // sRGB gamma correction per https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
 
+import { SEED_FRAGRANCES as SEED_DATA } from "@/data/seed-data";
+
 export type Rgba = { r: number; g: number; b: number; a: number };
 
 // Canonical ink and bone. Must match --color-ink and --color-bg in
@@ -25,19 +27,15 @@ export const BONE = "#F4EFE8";
  */
 export const CHOSEN_TINT_PERCENT = 10;
 
-// Seed fragrance accents, in the order they appear in the brief.
-// scripts/check-contrast.ts and src/lib/color.test.ts both read from this.
-// Batch 2.5 will replace this array with src/data/seed-data.ts as the source.
-export const SEED_FRAGRANCES = [
-  { name: "Eko Nights", hex: "#B8691F" },
-  { name: "Harmattan", hex: "#A8745A" },
-  { name: "Lagoon", hex: "#3F8FA6" },
-  { name: "Adire", hex: "#3B4A8F" },
-  { name: "Palm Wine", hex: "#D9B15B" },
-  { name: "Iroko", hex: "#6B6A3A" },
-  { name: "Night Bloom", hex: "#8A4F7D" },
-  { name: "First Rain", hex: "#7E9BA3" },
-] as const;
+/**
+ * The eight seed fragrance accents, derived from src/data/seed-data.ts so
+ * the catalogue and the contrast checks cannot drift. Tests and scripts
+ * iterate this array for name/hex pairs.
+ */
+export const SEED_FRAGRANCES = SEED_DATA.map((f) => ({
+  name: f.name,
+  hex: f.accentHex,
+}));
 
 export function parseColor(input: string): Rgba {
   const hex = input.trim();
