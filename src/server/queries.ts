@@ -1,10 +1,17 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "./db";
-import { products, productVariants } from "./schema";
+import {
+  orders,
+  orderItems,
+  products,
+  productVariants,
+} from "./schema";
 import { pyramidSchema, type Pyramid } from "../lib/pyramid";
 
 export type ProductRow = typeof products.$inferSelect;
 export type VariantRow = typeof productVariants.$inferSelect;
+export type OrderRow = typeof orders.$inferSelect;
+export type OrderItemRow = typeof orderItems.$inferSelect;
 
 export type ProductWithPyramid = Omit<ProductRow, "pyramid"> & {
   pyramid: Pyramid;
@@ -19,6 +26,8 @@ export type VariantWithProduct = VariantRow & {
   productSlug: string;
   productActive: boolean;
 };
+
+export type OrderWithItems = OrderRow & { items: OrderItemRow[] };
 
 export async function getActiveProducts(): Promise<ProductWithPyramid[]> {
   const rows = await db
@@ -88,17 +97,11 @@ export async function getActiveProductsWithVariants(): Promise<
   }));
 }
 
-/**
- * Look up variants by id, joined with their product so the cart drawer can
- * display name, slug, size and current active/stock without a second query.
- * Unknown ids simply do not appear in the result, which the caller treats
- * as "no longer available".
- */
 export async function getVariantsByIds(
   ids: string[],
 ): Promise<VariantWithProduct[]> {
   if (ids.length === 0) return [];
-  const rows = await db
+  return db
     .select({
       id: productVariants.id,
       productId: productVariants.productId,
@@ -113,5 +116,30 @@ export async function getVariantsByIds(
     .from(productVariants)
     .innerJoin(products, eq(products.id, productVariants.productId))
     .where(inArray(productVariants.id, ids));
-  return rows;
+}
+
+/**
+ * Fetch a single order and its items by order number. Used by the
+ * confirmation page (server component) and by the tracking route when
+ * the phone has been verified. Returns null when no order matches.
+ */
+export async function getOrderWithItems(
+  orderNumber: string,
+): Promise<OrderWithItems | null> {
+  const orderRow = (
+    await db
+      .select()
+      .from(orders)
+      .where(eq(orders.orderNumber, orderNumber))
+      .limit(1)
+  ).at(0);
+  if (orderRow === undefined) return null;
+
+  const items = await db
+    .select()
+    .from(orderItems)
+    .where(eq(orderItems.orderId, orderRow.id))
+    .orderBy(orderItems.createdAt);
+
+  return { ...orderRow, items };
 }
