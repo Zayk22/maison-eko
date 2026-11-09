@@ -14,6 +14,12 @@ export type ProductWithVariants = ProductWithPyramid & {
   variants: VariantRow[];
 };
 
+export type VariantWithProduct = VariantRow & {
+  productName: string;
+  productSlug: string;
+  productActive: boolean;
+};
+
 export async function getActiveProducts(): Promise<ProductWithPyramid[]> {
   const rows = await db
     .select()
@@ -50,11 +56,6 @@ export async function getVariantsForProduct(
     .orderBy(productVariants.sizeMl);
 }
 
-/**
- * Active products with their variants attached. Used by the shop grid and
- * the home page featured section, both of which need the minimum variant
- * price for the "from" label and for price sorting.
- */
 export async function getActiveProductsWithVariants(): Promise<
   ProductWithVariants[]
 > {
@@ -85,4 +86,32 @@ export async function getActiveProductsWithVariants(): Promise<
     pyramid: pyramidSchema.parse(p.pyramid),
     variants: byProduct.get(p.id) ?? [],
   }));
+}
+
+/**
+ * Look up variants by id, joined with their product so the cart drawer can
+ * display name, slug, size and current active/stock without a second query.
+ * Unknown ids simply do not appear in the result, which the caller treats
+ * as "no longer available".
+ */
+export async function getVariantsByIds(
+  ids: string[],
+): Promise<VariantWithProduct[]> {
+  if (ids.length === 0) return [];
+  const rows = await db
+    .select({
+      id: productVariants.id,
+      productId: productVariants.productId,
+      sizeMl: productVariants.sizeMl,
+      priceKobo: productVariants.priceKobo,
+      stock: productVariants.stock,
+      createdAt: productVariants.createdAt,
+      productName: products.name,
+      productSlug: products.slug,
+      productActive: products.active,
+    })
+    .from(productVariants)
+    .innerJoin(products, eq(products.id, productVariants.productId))
+    .where(inArray(productVariants.id, ids));
+  return rows;
 }

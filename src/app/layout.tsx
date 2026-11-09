@@ -4,6 +4,7 @@ import { Nav } from "@/components/layout/nav";
 import { Footer } from "@/components/layout/footer";
 import { DemoNotice } from "@/components/ui/demo-notice";
 import { CartProvider } from "@/components/cart/cart-context";
+import { CartDrawer } from "@/components/cart/cart-drawer";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -35,6 +36,7 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
+          <CartDrawer />
         </CartProvider>
       </body>
     </html>
