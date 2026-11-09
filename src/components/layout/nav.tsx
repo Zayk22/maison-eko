@@ -17,23 +17,6 @@ const mobileNavLink =
   "hover:bg-bg hover:underline hover:underline-offset-4 hover:decoration-accent hover:decoration-2 " +
   "focus-visible:outline-none focus-visible:bg-bg focus-visible:underline focus-visible:underline-offset-4 focus-visible:decoration-accent focus-visible:decoration-2";
 
-const MOBILE_NAV_CSS = `
-  @keyframes me-slide-in-left {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(0); }
-  }
-  @keyframes me-mobile-fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  .me-mobile-nav-overlay[data-state="open"] { animation: me-mobile-fade-in 150ms ease-out; }
-  .me-mobile-nav-content[data-state="open"] { animation: me-slide-in-left 200ms ease-out; }
-  @media (prefers-reduced-motion: reduce) {
-    .me-mobile-nav-overlay[data-state="open"],
-    .me-mobile-nav-content[data-state="open"] { animation: none; }
-  }
-`;
-
 export function Nav() {
   const {
     itemCount,
@@ -59,7 +42,6 @@ export function Nav() {
 
   return (
     <header className="border-b border-border bg-bg relative z-40">
-      <style>{MOBILE_NAV_CSS}</style>
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="flex items-center justify-between h-16">
           <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>

@@ -1,7 +1,8 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "./db";
 import {
   orders,
+  orderEvents,
   orderItems,
   products,
   productVariants,
@@ -12,6 +13,7 @@ export type ProductRow = typeof products.$inferSelect;
 export type VariantRow = typeof productVariants.$inferSelect;
 export type OrderRow = typeof orders.$inferSelect;
 export type OrderItemRow = typeof orderItems.$inferSelect;
+export type OrderEventRow = typeof orderEvents.$inferSelect;
 
 export type ProductWithPyramid = Omit<ProductRow, "pyramid"> & {
   pyramid: Pyramid;
@@ -118,11 +120,6 @@ export async function getVariantsByIds(
     .where(inArray(productVariants.id, ids));
 }
 
-/**
- * Fetch a single order and its items by order number. Used by the
- * confirmation page (server component) and by the tracking route when
- * the phone has been verified. Returns null when no order matches.
- */
 export async function getOrderWithItems(
   orderNumber: string,
 ): Promise<OrderWithItems | null> {
@@ -142,4 +139,14 @@ export async function getOrderWithItems(
     .orderBy(orderItems.createdAt);
 
   return { ...orderRow, items };
+}
+
+export async function getOrderEvents(
+  orderId: string,
+): Promise<OrderEventRow[]> {
+  return db
+    .select()
+    .from(orderEvents)
+    .where(eq(orderEvents.orderId, orderId))
+    .orderBy(asc(orderEvents.createdAt));
 }

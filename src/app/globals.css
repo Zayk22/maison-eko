@@ -31,3 +31,82 @@
     min-height: 100svh;
   }
 }
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #f4efe8;
+  --color-surface: #fbf8f3;
+  --color-raised: #ffffff;
+  --color-ink: #1b1410;
+  --color-muted: rgba(27, 20, 16, 0.62);
+  --color-border: rgba(27, 20, 16, 0.1);
+  --color-border-strong: rgba(27, 20, 16, 0.5);
+  --color-accent: #b4532a;
+  --color-danger: #b3261e;
+  --color-success: #2f6b4f;
+
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-instrument-sans);
+
+  --radius-card: 14px;
+  --radius-control: 10px;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100svh;
+  }
+}
+
+/* Cart drawer animations */
+@keyframes me-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes me-slide-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes me-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.me-drawer-overlay[data-state="open"] { animation: me-fade-in 150ms ease-out; }
+.me-drawer-content[data-state="open"] { animation: me-slide-up 200ms ease-out; }
+@media (min-width: 768px) {
+  .me-drawer-content[data-state="open"] { animation: me-slide-right 200ms ease-out; }
+}
+
+/* Mobile nav animations */
+@keyframes me-slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes me-mobile-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.me-mobile-nav-overlay[data-state="open"] { animation: me-mobile-fade-in 150ms ease-out; }
+.me-mobile-nav-content[data-state="open"] { animation: me-slide-in-left 200ms ease-out; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .me-drawer-overlay[data-state="open"],
+  .me-drawer-content[data-state="open"],
+  .me-mobile-nav-overlay[data-state="open"],
+  .me-mobile-nav-content[data-state="open"] {
+    animation: none;
+  }
+  .me-drawer-content {
+    transition: none !important;
+  }
+}
