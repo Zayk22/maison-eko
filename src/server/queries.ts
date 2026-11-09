@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "./db";
 import { products, productVariants } from "./schema";
 import { pyramidSchema, type Pyramid } from "../lib/pyramid";
@@ -6,13 +6,12 @@ import { pyramidSchema, type Pyramid } from "../lib/pyramid";
 export type ProductRow = typeof products.$inferSelect;
 export type VariantRow = typeof productVariants.$inferSelect;
 
-// The row type already declares pyramid as Pyramid via $type<Pyramid>().
-// The runtime parse below is defence in depth: if the DB contains a shape
-// that no longer matches pyramidSchema (bad admin write, bad migration),
-// the query throws at the boundary rather than letting malformed data
-// flow into the UI.
 export type ProductWithPyramid = Omit<ProductRow, "pyramid"> & {
   pyramid: Pyramid;
+};
+
+export type ProductWithVariants = ProductWithPyramid & {
+  variants: VariantRow[];
 };
 
 export async function getActiveProducts(): Promise<ProductWithPyramid[]> {
@@ -49,4 +48,41 @@ export async function getVariantsForProduct(
     .from(productVariants)
     .where(eq(productVariants.productId, productId))
     .orderBy(productVariants.sizeMl);
+}
+
+/**
+ * Active products with their variants attached. Used by the shop grid and
+ * the home page featured section, both of which need the minimum variant
+ * price for the "from" label and for price sorting.
+ */
+export async function getActiveProductsWithVariants(): Promise<
+  ProductWithVariants[]
+> {
+  const productRows = await db
+    .select()
+    .from(products)
+    .where(eq(products.active, true))
+    .orderBy(products.createdAt);
+
+  if (productRows.length === 0) return [];
+
+  const ids = productRows.map((p) => p.id);
+  const variantRows = await db
+    .select()
+    .from(productVariants)
+    .where(inArray(productVariants.productId, ids))
+    .orderBy(productVariants.sizeMl);
+
+  const byProduct = new Map<string, VariantRow[]>();
+  for (const v of variantRows) {
+    const list = byProduct.get(v.productId) ?? [];
+    list.push(v);
+    byProduct.set(v.productId, list);
+  }
+
+  return productRows.map((p) => ({
+    ...p,
+    pyramid: pyramidSchema.parse(p.pyramid),
+    variants: byProduct.get(p.id) ?? [],
+  }));
 }

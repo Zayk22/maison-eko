@@ -3,17 +3,21 @@ export const FLAT_SHIPPING_KOBO = 350000;
 /**
  * Format an integer number of kobo as Nigerian Naira.
  * Throws if the input is not an integer, so a float can never be formatted.
+ *
+ * Whole naira amounts are shown without decimals (NGN 32,000, not NGN
+ * 32,000.00). Two decimals are shown only when kobo is non-zero.
  */
 export function formatMoney(kobo: number): string {
   if (!Number.isInteger(kobo)) {
     throw new Error("Money must be an integer number of kobo.");
   }
   const naira = kobo / 100;
+  const hasKobo = kobo % 100 !== 0;
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: "NGN",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: hasKobo ? 2 : 0,
+    maximumFractionDigits: hasKobo ? 2 : 0,
   }).format(naira);
 }
 
