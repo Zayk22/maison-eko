@@ -46,13 +46,7 @@ const DRAWER_CSS = `
 `;
 
 export function CartDrawer() {
-  const {
-    lines,
-    drawerOpen,
-    closeDrawer,
-    setQuantity,
-    removeItem,
-  } = useCart();
+  const { lines, drawerOpen, closeDrawer, setQuantity, removeItem } = useCart();
 
   const idsKey = useMemo(
     () => lines.map((l) => l.variantId).join(","),

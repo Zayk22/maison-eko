@@ -11,7 +11,6 @@ import {
 } from "../src/lib/color";
 import { SEED_FRAGRANCES as SEED_DATA } from "../src/data/seed-data";
 
-// Derived locally because color.ts intentionally does not import seed-data.ts.
 const SEED_FRAGRANCES = SEED_DATA.map((f) => ({
   name: f.name,
   hex: f.accentHex,
@@ -47,6 +46,13 @@ function resolveToken(tokens: TokenMap, name: string): Rgba {
     return resolveToken(tokens, inner);
   }
   return parseColor(raw);
+}
+
+function toHexStr(c: Rgba): string {
+  const r = Math.round(c.r).toString(16).padStart(2, "0");
+  const g = Math.round(c.g).toString(16).padStart(2, "0");
+  const b = Math.round(c.b).toString(16).padStart(2, "0");
+  return `#${r}${g}${b}`.toUpperCase();
 }
 
 type Pair = { label: string; fg: string; bg: string; threshold: number };
@@ -134,6 +140,56 @@ function main(): void {
       "3.0",
   );
 
+  // --- Border opacity candidates ---
+  console.log("");
+  console.log("Border opacity candidates (ink at N% over backgrounds, target >= 3.0)");
+  console.log(
+    pad("Opacity", 10) +
+      pad("Background", 12) +
+      pad("Composite", 12) +
+      pad("Ratio", 8) +
+      "Result",
+  );
+  console.log("-".repeat(52));
+
+  const inkRgba = parseColor(INK);
+  const bgs: [string, Rgba][] = [
+    ["bg", resolveToken(tokens, "--color-bg")],
+    ["surface", resolveToken(tokens, "--color-surface")],
+    ["raised", resolveToken(tokens, "--color-raised")],
+  ];
+
+  let lowestPassingOpacity: number | null = null;
+
+  for (const pct of [40, 45, 50, 55, 60]) {
+    const alpha = pct / 100;
+    const fg = { ...inkRgba, a: alpha };
+    let allPass = true;
+    for (const [bgName, bgRgba] of bgs) {
+      const comp = composite(fg, bgRgba);
+      const ratio = contrastRatio(comp, bgRgba);
+      const passed = ratio >= 3.0;
+      if (!passed) allPass = false;
+      console.log(
+        pad(`${pct}%`, 10) +
+          pad(bgName, 12) +
+          pad(toHexStr(comp), 12) +
+          pad(ratio.toFixed(2), 8) +
+          (passed ? "PASS" : "FAIL"),
+      );
+    }
+    if (allPass && lowestPassingOpacity === null) {
+      lowestPassingOpacity = pct;
+    }
+  }
+  console.log("");
+  if (lowestPassingOpacity !== null) {
+    console.log(`Lowest opacity above 3.0 for all backgrounds: ${lowestPassingOpacity}%`);
+  } else {
+    console.log("No opacity in the 40-60% range passes 3.0 for all backgrounds.");
+  }
+
+  // --- Tinted wash ---
   const mutedRaw = resolveToken(tokens, "--color-muted");
 
   let chosenPercent: number | null = null;
