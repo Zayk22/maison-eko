@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { db } from "./db";
 import {
   orders,
@@ -6,6 +6,7 @@ import {
   orderItems,
   products,
   productVariants,
+  stores,
 } from "./schema";
 import { pyramidSchema, type Pyramid } from "../lib/pyramid";
 
@@ -30,6 +31,14 @@ export type VariantWithProduct = VariantRow & {
 };
 
 export type OrderWithItems = OrderRow & { items: OrderItemRow[] };
+
+export async function getStoreId(): Promise<string> {
+  const row = (
+    await db.select({ id: stores.id }).from(stores).limit(1)
+  ).at(0);
+  if (!row) throw new Error("No store row found.");
+  return row.id;
+}
 
 export async function getActiveProducts(): Promise<ProductWithPyramid[]> {
   const rows = await db
@@ -149,4 +158,64 @@ export async function getOrderEvents(
     .from(orderEvents)
     .where(eq(orderEvents.orderId, orderId))
     .orderBy(asc(orderEvents.createdAt));
+}
+
+export async function getAllProducts(): Promise<ProductWithVariants[]> {
+  const productRows = await db
+    .select()
+    .from(products)
+    .orderBy(desc(products.createdAt));
+
+  if (productRows.length === 0) return [];
+
+  const ids = productRows.map((p) => p.id);
+  const variantRows = await db
+    .select()
+    .from(productVariants)
+    .where(inArray(productVariants.productId, ids))
+    .orderBy(productVariants.sizeMl);
+
+  const byProduct = new Map<string, VariantRow[]>();
+  for (const v of variantRows) {
+    const list = byProduct.get(v.productId) ?? [];
+    list.push(v);
+    byProduct.set(v.productId, list);
+  }
+
+  return productRows.map((p) => ({
+    ...p,
+    pyramid: pyramidSchema.parse(p.pyramid),
+    variants: byProduct.get(p.id) ?? [],
+  }));
+}
+
+export async function getProductById(
+  id: string,
+): Promise<ProductWithVariants | null> {
+  const row = (
+    await db.select().from(products).where(eq(products.id, id)).limit(1)
+  ).at(0);
+  if (row === undefined) return null;
+
+  const variants = await db
+    .select()
+    .from(productVariants)
+    .where(eq(productVariants.productId, id))
+    .orderBy(productVariants.sizeMl);
+
+  return {
+    ...row,
+    pyramid: pyramidSchema.parse(row.pyramid),
+    variants,
+  };
+}
+
+export async function getVariantsByProductId(
+  productId: string,
+): Promise<VariantRow[]> {
+  return db
+    .select()
+    .from(productVariants)
+    .where(eq(productVariants.productId, productId))
+    .orderBy(productVariants.sizeMl);
 }

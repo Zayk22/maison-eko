@@ -54,9 +54,14 @@ export default async function AdminLayout({
             >
               Admin
             </Link>
+            <nav className="flex items-center gap-4 text-sm font-medium text-ink">
+              <Link href="/admin/products" className="hover:underline underline-offset-4 decoration-accent">
+                Products
+              </Link>
+            </nav>
             <Link
               href="/"
-              className="text-sm text-muted hover:text-ink transition-colors"
+              className="text-sm text-muted hover:text-ink transition-colors ml-2 border-l border-border pl-4"
             >
               View store
             </Link>
@@ -70,7 +75,7 @@ export default async function AdminLayout({
             </button>
           </SignOutButton>
         </header>
-        <main>{children}</main>
+        <main id="main-content">{children}</main>
       </div>
     </ClerkProvider>
   );
