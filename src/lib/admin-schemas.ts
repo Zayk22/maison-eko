@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { SCENT_FAMILIES } from "./types";
+import { SCENT_FAMILIES, ORDER_STATUSES } from "./types";
 import { pyramidSchema } from "./pyramid";
+import { MAX_UNIT_PRICE_KOBO } from "./schemas";
 import {
   BONE,
   INK,
@@ -11,15 +12,9 @@ import {
   tintWash,
 } from "./color";
 
-// TODO(6.2b): move MAX_UNIT_PRICE_KOBO to src/lib/schemas.ts (or money.ts)
-// when that file is next touched. For now this lives here because this is
-// the only file that validates a user-entered price, and moving it there
-// would require a fifth file in this batch. Never retype 10_000_000.
-export const MAX_UNIT_PRICE_KOBO = 10_000_000;
+export { MAX_UNIT_PRICE_KOBO };
 export const MAX_STOCK = 9999;
 
-// Mirrors --color-muted in src/app/globals.css. If the token changes,
-// update this constant so the contrast check stays honest.
 const MUTED_RAW = "rgba(27, 20, 16, 0.62)";
 
 function passesAccentContrast(hex: string): boolean {
@@ -70,8 +65,6 @@ export const productCreateSchema = z.object({
     .trim()
     .min(2, "Name is too short.")
     .max(100, "Name is too long."),
-  // Optional. Empty string (or omitted) means the action derives the slug
-  // from the name using slugify(). When provided, the format is enforced.
   slug: slugField.optional(),
   description: z
     .string()
@@ -85,10 +78,6 @@ export const productCreateSchema = z.object({
 
 export type ProductCreate = z.infer<typeof productCreateSchema>;
 
-// Slug is intentionally absent. It is immutable after creation. Zod's
-// default object mode strips unknown keys, so a payload that includes
-// `slug` will pass but the value is discarded before it reaches the
-// action.
 export const productUpdateSchema = z.object({
   id: z.string().uuid("Invalid product id."),
   name: z
@@ -125,8 +114,6 @@ export const variantCreateSchema = z.object({
 
 export type VariantCreate = z.infer<typeof variantCreateSchema>;
 
-// sizeMl is intentionally absent. It is immutable after creation. To hide
-// a size, set stock to 0. Zod strips the field if a payload includes it.
 export const variantUpdateSchema = z.object({
   id: z.string().uuid("Invalid variant id."),
   priceKobo: z
@@ -142,3 +129,8 @@ export const variantUpdateSchema = z.object({
 });
 
 export type VariantUpdate = z.infer<typeof variantUpdateSchema>;
+
+export const orderStatusUpdateSchema = z.object({
+  orderId: z.string().uuid("Invalid order id."),
+  nextStatus: z.enum(ORDER_STATUSES),
+});

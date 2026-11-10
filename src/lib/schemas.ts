@@ -2,13 +2,10 @@ import { z } from "zod";
 import { normalizePhone } from "./phone";
 import { MAX_QUANTITY_PER_LINE } from "./order";
 
+export const MAX_UNIT_PRICE_KOBO = 10_000_000;
+
 // ─── Phone ───────────────────────────────────────────────────────────────
 
-/**
- * Accepts any Nigerian phone format that `normalizePhone` accepts.
- * Returns the canonical +234xxxxxxxxxx form. Failure message is the same
- * for every invalid format so the UI cannot be probed with prefix guesses.
- */
 const phoneField = z
   .string()
   .trim()
@@ -48,12 +45,6 @@ export type CartSubmission = z.infer<typeof cartSubmissionSchema>;
 
 // ─── Checkout form ──────────────────────────────────────────────────────
 
-/**
- * The form has three address fields; the server combines them into the
- * single `address` column on the orders table. The default state is Lagos,
- * matching the brief. `note` is optional and empty strings are converted
- * to null so the column stays clean.
- */
 export const checkoutFormSchema = z
   .object({
     name: z

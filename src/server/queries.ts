@@ -9,6 +9,7 @@ import {
   stores,
 } from "./schema";
 import { pyramidSchema, type Pyramid } from "../lib/pyramid";
+import type { OrderStatus } from "@/lib/types";
 
 export type ProductRow = typeof products.$inferSelect;
 export type VariantRow = typeof productVariants.$inferSelect;
@@ -218,4 +219,36 @@ export async function getVariantsByProductId(
     .from(productVariants)
     .where(eq(productVariants.productId, productId))
     .orderBy(productVariants.sizeMl);
+}
+export async function getAllOrders(
+  statusFilter?: OrderStatus,
+): Promise<OrderRow[]> {
+  const query = db.select().from(orders);
+  const filtered = statusFilter
+    ? query.where(eq(orders.status, statusFilter))
+    : query;
+  return filtered.orderBy(desc(orders.createdAt));
+}
+
+export async function getOrderById(
+  id: string,
+): Promise<OrderWithItems & { events: OrderEventRow[] } | null> {
+  const row = (
+    await db.select().from(orders).where(eq(orders.id, id)).limit(1)
+  ).at(0);
+  if (!row) return null;
+
+  const items = await db
+    .select()
+    .from(orderItems)
+    .where(eq(orderItems.orderId, row.id))
+    .orderBy(orderItems.createdAt);
+
+  const events = await db
+    .select()
+    .from(orderEvents)
+    .where(eq(orderEvents.orderId, row.id))
+    .orderBy(asc(orderEvents.createdAt));
+
+  return { ...row, items, events };
 }
