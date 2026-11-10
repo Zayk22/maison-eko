@@ -47,12 +47,20 @@ export default async function AdminLayout({
     <ClerkProvider>
       <div className="mx-auto max-w-6xl px-4 py-8">
         <header className="flex items-center justify-between mb-10 pb-6 border-b border-border">
-          <Link
-            href="/admin"
-            className="font-display text-2xl text-ink hover:underline hover:underline-offset-4 hover:decoration-accent"
-          >
-            Admin
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link
+              href="/admin"
+              className="font-display text-2xl text-ink hover:underline hover:underline-offset-4 hover:decoration-accent"
+            >
+              Admin
+            </Link>
+            <Link
+              href="/"
+              className="text-sm text-muted hover:text-ink transition-colors"
+            >
+              View store
+            </Link>
+          </div>
           <SignOutButton redirectUrl="/">
             <button
               type="button"

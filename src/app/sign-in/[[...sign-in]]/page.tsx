@@ -1,5 +1,6 @@
 import { ClerkProvider, SignIn } from "@clerk/nextjs";
 import { Suspense } from "react";
+import Link from "next/link";
 
 export const metadata = {
   title: "Sign in — Maison Eko",
@@ -8,16 +9,25 @@ export const metadata = {
 
 export default function SignInPage() {
   return (
-    <ClerkProvider>
-      <div className="mx-auto max-w-md px-4 py-16 md:py-24">
-        <div className="text-center mb-8">
-          <h1 className="font-display text-3xl md:text-4xl text-ink">
-            Sign in
-          </h1>
-          <p className="mt-2 text-sm text-muted">
-            Admin access only. This page is not part of the customer store.
-          </p>
-        </div>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: "#1b1410",
+          borderRadius: "10px",
+          fontFamily: "var(--font-instrument-sans)",
+        },
+        elements: {
+          footerAction: { display: "none" },
+        },
+      }}
+    >
+      <div className="min-h-svh flex flex-col items-center justify-center bg-bg px-4 py-8">
+        <Link
+          href="/"
+          className="font-display text-2xl font-medium tracking-tight text-ink mb-8 hover:underline hover:underline-offset-4 hover:decoration-accent"
+        >
+          Maison Eko
+        </Link>
         <Suspense
           fallback={
             <div className="text-center text-sm text-muted py-8">
@@ -27,6 +37,12 @@ export default function SignInPage() {
         >
           <SignIn />
         </Suspense>
+        <Link
+          href="/"
+          className="mt-6 text-sm text-muted hover:text-ink transition-colors"
+        >
+          Back to store
+        </Link>
       </div>
     </ClerkProvider>
   );
