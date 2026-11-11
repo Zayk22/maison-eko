@@ -2,8 +2,9 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Minus, Plus, Trash2 } from "lucide-react";
+import { animate, useMotionValue, useReducedMotion } from "motion/react";
 import { useCart } from "./cart-context";
 import { formatMoney, FLAT_SHIPPING_KOBO } from "@/lib/money";
 import { MAX_QUANTITY_PER_LINE } from "@/lib/order";
@@ -45,8 +46,38 @@ const DRAWER_CSS = `
   }
 `;
 
+function NumberRoll({ value }: { value: number }) {
+  const reduce = useReducedMotion();
+  const motionValue = useMotionValue(value);
+  const [display, setDisplay] = useState(value);
+
+  useEffect(() => {
+    if (reduce) {
+      motionValue.set(value);
+      setDisplay(value);
+      return;
+    }
+    
+    // Animate the motionValue and update state on every frame to trigger React re-renders
+    const controls = animate(motionValue, value, {
+      duration: 0.35,
+      ease: "linear",
+      onUpdate: (latest) => setDisplay(Math.round(latest)),
+    });
+    return () => controls.stop();
+  }, [value, motionValue, reduce]);
+
+  return <span className="tabular-nums">{formatMoney(display)}</span>;
+}
+
 export function CartDrawer() {
-  const { lines, drawerOpen, closeDrawer, setQuantity, removeItem } = useCart();
+  const {
+    lines,
+    drawerOpen,
+    closeDrawer,
+    setQuantity,
+    removeItem,
+  } = useCart();
 
   const idsKey = useMemo(
     () => lines.map((l) => l.variantId).join(","),
@@ -247,7 +278,7 @@ export function CartDrawer() {
                                 />
                               </button>
                             </div>
-                            <span className="text-sm font-medium text-ink tabular-nums">
+                            <span className="text-sm font-medium text-ink">
                               {formatMoney(r.lineTotalKobo)}
                             </span>
                           </div>
@@ -263,21 +294,15 @@ export function CartDrawer() {
               <div className="border-t border-border p-4 space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted">Subtotal</span>
-                  <span className="text-ink tabular-nums">
-                    {formatMoney(subtotalKobo)}
-                  </span>
+                  <NumberRoll value={subtotalKobo} />
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted">Shipping</span>
-                  <span className="text-ink tabular-nums">
-                    {formatMoney(shippingKobo)}
-                  </span>
+                  <NumberRoll value={shippingKobo} />
                 </div>
                 <div className="flex items-center justify-between text-base font-medium border-t border-border pt-3">
                   <span className="text-ink">Total</span>
-                  <span className="text-ink tabular-nums">
-                    {formatMoney(totalKobo)}
-                  </span>
+                  <NumberRoll value={totalKobo} />
                 </div>
                 <Dialog.Close asChild>
                   <Link
