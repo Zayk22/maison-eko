@@ -3,14 +3,8 @@
 import { useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { formatMoney } from "@/lib/money";
-
-type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "paid"
-  | "shipped"
-  | "delivered"
-  | "cancelled";
+import { formatOrderDate, trackingStages } from "@/lib/tracking-display";
+import type { OrderStatus } from "@/lib/types";
 
 type TrackingResponse = {
   orderNumber: string;
@@ -21,12 +15,6 @@ type TrackingResponse = {
   events: { status: OrderStatus; createdAt: string; note: string | null }[];
 };
 
-const inputBase =
-  "w-full min-h-11 rounded-control border border-border-strong bg-surface px-3 text-base text-ink " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
-
-const labelBase = "block text-sm font-medium text-ink mb-1";
-
 const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "Pending",
   confirmed: "Confirmed",
@@ -36,11 +24,17 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
   cancelled: "Cancelled",
 };
 
+const inputBase =
+  "w-full min-h-11 rounded-control border border-border-strong bg-surface px-3 text-base text-ink " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
+
+const labelBase = "block text-sm font-medium text-ink mb-1";
+
 export function TrackForm() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<TrackingResponse | null>(null);
-  const summaryRef = useRef<HTMLDivElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -75,7 +69,7 @@ export function TrackForm() {
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setPending(false);
-      if (summaryRef.current) summaryRef.current.focus();
+      if (resultRef.current) resultRef.current.focus();
     }
   }
 
@@ -127,13 +121,16 @@ export function TrackForm() {
       </form>
 
       <div
-        ref={summaryRef}
+        ref={resultRef}
         tabIndex={-1}
         aria-live="polite"
         className="outline-none"
       >
         {error && (
-          <div role="alert" className="bg-danger/10 border border-danger text-danger p-4 rounded-control">
+          <div
+            role="alert"
+            className="bg-danger/10 border border-danger text-danger p-4 rounded-control"
+          >
             {error}
           </div>
         )}
@@ -160,20 +157,42 @@ export function TrackForm() {
             </div>
 
             <ol className="relative border-l border-border ml-3 space-y-6">
-              {order.events.map((ev, idx) => (
-                <li key={idx} className="pl-6 relative">
-                  <span className="absolute -left-[7px] top-1 w-3 h-3 rounded-full bg-accent" />
-                  <p className="text-sm font-medium text-ink">
-                    {STATUS_LABEL[ev.status]}
-                  </p>
-                  <p className="text-xs text-muted">
-                    {new Date(ev.createdAt).toLocaleString("en-NG")}
-                  </p>
-                  {ev.note && (
-                    <p className="text-xs text-muted mt-1">{ev.note}</p>
-                  )}
-                </li>
-              ))}
+              {trackingStages(
+                order.status,
+                order.events.map((e) => ({ status: e.status })),
+              ).map((stage) => {
+                const event = order.events.find(
+                  (e) => e.status === stage.status,
+                );
+                const dotClass = stage.done
+                  ? "bg-accent"
+                  : "border border-border bg-surface";
+                return (
+                  <li key={stage.status} className="pl-6 relative">
+                    <span
+                      className={`absolute -left-[7px] top-1 w-3 h-3 rounded-full ${dotClass}`}
+                    />
+                    <p
+                      className={
+                        "text-sm font-medium " +
+                        (stage.done ? "text-ink" : "text-muted")
+                      }
+                    >
+                      {STATUS_LABEL[stage.status]}
+                    </p>
+                    {event ? (
+                      <p className="text-xs text-muted">
+                        {formatOrderDate(event.createdAt)}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted">Pending</p>
+                    )}
+                    {event?.note && (
+                      <p className="text-xs text-muted mt-1">{event.note}</p>
+                    )}
+                  </li>
+                );
+              })}
             </ol>
 
             <div className="border-t border-border mt-6 pt-4">
@@ -186,7 +205,7 @@ export function TrackForm() {
                     <span className="text-ink">
                       {it.productName}{" "}
                       <span className="text-muted">
-                        ({it.sizeMl} ml &times; {it.quantity})
+                        ({it.sizeMl} ml × {it.quantity})
                       </span>
                     </span>
                   </li>
