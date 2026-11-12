@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About — Maison Eko",
+  title: "About",
   description: "A demo perfume house in Lagos. Portfolio project.",
+  alternates: { canonical: "/about" },
 };
-
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 md:px-8 py-16 md:py-24 space-y-6">

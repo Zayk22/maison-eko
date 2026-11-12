@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import { TrackForm } from "@/components/track-order/track-form";
+
+export const metadata: Metadata = {
+  title: "Track your order",
+  description: "Look up a Maison Eko order with your order number and phone.",
+  robots: { index: false, follow: false },
+};
 
 export default function TrackOrderPage() {
   return (

@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getOrderWithItems } from "@/server/queries";
 import { formatMoney } from "@/lib/money";
+
+export const metadata: Metadata = {
+  title: "Order confirmation",
+  robots: { index: false, follow: false },
+};
 
 type Params = Promise<{ orderNumber: string }>;
 
@@ -49,10 +55,7 @@ export default async function ConfirmationPage({
         <h2 className="text-sm font-medium text-ink mb-4">Items</h2>
         <ul className="space-y-3">
           {order.items.map((item) => (
-            <li
-              key={item.id}
-              className="flex justify-between gap-4 text-sm"
-            >
+            <li key={item.id} className="flex justify-between gap-4 text-sm">
               <div>
                 <p className="text-ink">{item.productName}</p>
                 <p className="text-xs text-muted">

@@ -3,11 +3,11 @@ import { getActiveProductsWithVariants } from "@/server/queries";
 import { ScentFinderQuiz } from "@/components/shop/scent-finder-quiz";
 
 export const metadata: Metadata = {
-  title: "Scent finder — Maison Eko",
+  title: "Scent finder",
   description:
     "Three questions. We suggest a fragrance from the Maison Eko collection.",
+  alternates: { canonical: "/scent-finder" },
 };
-
 export default async function ScentFinderPage() {
   const products = await getActiveProductsWithVariants();
 

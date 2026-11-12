@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getActiveProductsWithVariants } from "@/server/queries";
 import { ProductCard } from "@/components/shop/product-card";
 import { SCENT_FAMILIES, type ScentFamily } from "@/lib/types";
 import { SortSelect } from "@/components/shop/sort-select";
+
+export const metadata: Metadata = {
+  title: "Shop",
+  description: "Browse the Maison Eko collection.",
+  alternates: { canonical: "/shop" },
+};
 
 type SortKey = "featured" | "price-asc" | "price-desc";
 

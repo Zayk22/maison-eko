@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Contact — Maison Eko",
+  title: "Contact",
   description: "A demo perfume house in Lagos. Portfolio project.",
+  alternates: { canonical: "/contact" },
 };
-
 export default function ContactPage() {
   const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
   const hasWhatsApp = whatsapp && whatsapp.trim().length > 0;
