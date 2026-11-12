@@ -180,12 +180,10 @@ export function TrackForm() {
                     >
                       {STATUS_LABEL[stage.status]}
                     </p>
-                    {event ? (
+                    {event && (
                       <p className="text-xs text-muted">
                         {formatOrderDate(event.createdAt)}
                       </p>
-                    ) : (
-                      <p className="text-xs text-muted">Pending</p>
                     )}
                     {event?.note && (
                       <p className="text-xs text-muted mt-1">{event.note}</p>

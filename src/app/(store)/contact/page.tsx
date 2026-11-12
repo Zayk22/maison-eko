@@ -8,9 +8,7 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
   const hasWhatsApp = whatsapp && whatsapp.trim().length > 0;
-  const url = hasWhatsApp
-    ? `https://wa.me/${whatsapp.trim()}`
-    : null;
+  const url = hasWhatsApp ? `https://wa.me/${whatsapp.trim()}` : null;
 
   return (
     <div className="mx-auto max-w-2xl px-4 md:px-8 py-16 md:py-24 space-y-6">
@@ -20,9 +18,7 @@ export default function ContactPage() {
 
       <p className="text-base text-muted leading-relaxed">
         This is a demo store. There is no live customer service, no
-        fulfillment team, and no one monitoring the inbox. If you are
-        interested in the project behind Maison Eko, the best place to
-        look is the source code linked from the About page.
+        fulfillment team, and no one monitoring the inbox.
       </p>
 
       {url ? (
