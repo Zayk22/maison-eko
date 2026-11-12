@@ -34,3 +34,4 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The scent finder quiz is keyed to the eight seed fragrances by slug. Products created via the admin dashboard do not appear in the quiz until added to FRAGRANCE_INTENSITY in src/lib/scent-config.ts. This is a deliberate limit: the quiz scoring is tied to a curated intensity map, not to arbitrary products.
