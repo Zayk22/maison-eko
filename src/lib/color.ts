@@ -1,35 +1,8 @@
-// WCAG 2.1 relative luminance and contrast ratio.
-// sRGB gamma correction per https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
-//
-// This file deliberately does not import src/data/seed-data.ts.
-// Client components use readableOn and tintWash; importing seed-data here
-// would ship every product description to the browser. The colour test and
-// the contrast script derive their own { name, hex } view from seed-data.ts.
-
 export type Rgba = { r: number; g: number; b: number; a: number };
-
-// Canonical ink and bone. Must match --color-ink and --color-bg in
-// src/app/globals.css. scripts/check-contrast.ts asserts the match and
-// exits non-zero if either has drifted.
 export const INK = "#1B1410";
 export const BONE = "#F4EFE8";
-
-/**
- * Architect-approved tinted-wash percentage for page backgrounds.
- *
- * Approved 2026-11-08 at 10%: for all eight fragrances, ink on the tinted
- * wash clears 5.0:1 and composited muted clears 4.5:1. The binding
- * condition measured at the next step up (15%) was muted >= 4.5.
- *
- * Page-background washes use this percent. Raw fragrance colour is reserved
- * for bottle fills, swatches and large display type.
- *
- * Open decision for Batch 8: a stronger wash (up to 60%) using ink-only text
- * with no muted on the wash is possible for the scent story scroll. Not
- * built and not approved. Revisit in Batch 8 if the story needs it.
- */
 export const CHOSEN_TINT_PERCENT = 10;
-
+export const WASH_PERCENT_STORY = 40;
 export function parseColor(input: string): Rgba {
   const hex = input.trim();
   const hexMatch = /^#([0-9a-fA-F]{6})$/.exec(hex);
@@ -91,10 +64,6 @@ export function contrastRatio(fg: Rgba, bg: Rgba): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-/**
- * Mix a fragrance colour into bone in sRGB. percent = 0 returns bone,
- * percent = 100 returns the fragrance colour.
- */
 export function tintWash(
   fragranceHex: string,
   boneHex: string,

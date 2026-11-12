@@ -3,6 +3,7 @@ import {
   INK,
   BONE,
   CHOSEN_TINT_PERCENT,
+  WASH_PERCENT_STORY,
   parseColor,
   composite,
   contrastRatio,
@@ -12,8 +13,6 @@ import {
 } from "./color";
 import { SEED_FRAGRANCES as SEED_DATA } from "@/data/seed-data";
 
-// Derived locally because color.ts intentionally does not import seed-data.ts,
-// to keep client bundles small. The test is free to import seed-data.
 const SEED_FRAGRANCES = SEED_DATA.map((f) => ({
   name: f.name,
   hex: f.accentHex,
@@ -146,6 +145,16 @@ describe("tintWash", () => {
       }
     },
   );
+});
+
+describe("WASH_PERCENT_STORY contrast", () => {
+  it("ink on story wash is at least 5.0 for all seed fragrances", () => {
+    for (const f of SEED_FRAGRANCES) {
+      const wash = tintWash(f.hex, BONE, WASH_PERCENT_STORY);
+      const ratio = contrastRatio(parseColor(INK), parseColor(wash));
+      expect(ratio).toBeGreaterThanOrEqual(5.0);
+    }
+  });
 });
 
 describe("readableOn over every seed fragrance accent", () => {

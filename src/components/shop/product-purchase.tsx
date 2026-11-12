@@ -118,38 +118,9 @@ export function ProductPurchase({ product, variants }: Props) {
               {added ? "Added to cart" : "Add to cart"}
             </button>
           </div>
-
-          <div className="border-t border-border pt-6 space-y-4">
-            <h2 className="text-[13px] font-medium text-ink uppercase tracking-wide">Scent notes</h2>
-            <div>
-              <p className="text-[13px] text-muted uppercase tracking-wide mb-1">
-                Top
-              </p>
-              <p className="text-sm text-ink">
-                {product.pyramid.top.join(", ")}
-              </p>
-            </div>
-            <div>
-              <p className="text-[13px] text-muted uppercase tracking-wide mb-1">
-                Heart
-              </p>
-              <p className="text-sm text-ink">
-                {product.pyramid.heart.join(", ")}
-              </p>
-            </div>
-            <div>
-              <p className="text-[13px] text-muted uppercase tracking-wide mb-1">
-                Base
-              </p>
-              <p className="text-sm text-ink">
-                {product.pyramid.base.join(", ")}
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Spacer for mobile sticky bar so footer doesn't hide behind it */}
       <div className="h-24 md:hidden" aria-hidden="true" />
 
       {selected && selected.stock > 0 && (

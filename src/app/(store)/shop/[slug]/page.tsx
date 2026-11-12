@@ -3,6 +3,7 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import { getProductBySlug, getVariantsForProduct } from "@/server/queries";
 import { ProductPurchase } from "@/components/shop/product-purchase";
+import { ScentPyramid } from "@/components/shop/scent-pyramid";
 
 type Params = Promise<{ slug: string }>;
 
@@ -33,5 +34,10 @@ export default async function ProductPage({ params }: { params: Params }) {
 
   const variants = await getVariantsForProduct(product.id);
 
-  return <ProductPurchase product={product} variants={variants} />;
+  return (
+    <div className="pb-24 md:pb-0">
+      <ProductPurchase product={product} variants={variants} />
+      <ScentPyramid accentHex={product.accentHex} pyramid={product.pyramid} />
+    </div>
+  );
 }
