@@ -3,6 +3,13 @@ import { fraunces, instrumentSans } from "./fonts";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
+const OG_IMAGE = {
+  url: "/og-image.png",
+  width: 1200,
+  height: 630,
+  alt: "Maison Eko",
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -16,11 +23,13 @@ export const metadata: Metadata = {
     locale: "en_NG",
     title: "Maison Eko",
     description: "A demo perfume house in Lagos. No real orders are fulfilled.",
+    images: [OG_IMAGE],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Maison Eko",
     description: "A demo perfume house in Lagos. No real orders are fulfilled.",
+    images: [OG_IMAGE],
   },
   robots: { index: true, follow: true },
 };
