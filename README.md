@@ -53,14 +53,14 @@ Deployed on Vercel: https://maison-eko.vercel.app/
 
 ## Measured scores (17 Nov 2026)
 
-Lighthouse mobile on the deployed site, Incognito, no extensions, single run per page:
+Lighthouse mobile on the deployed site, Incognito, no extensions. `/shop` was measured four times after the `aria-current` fix to capture the variability; the other pages are single runs.
 
 - `/` — Performance 89, Accessibility 100, Best Practices 100, SEO 100
-- `/shop` — Performance 95, Accessibility 94, Best Practices 100, SEO 100
+- `/shop` — Performance 85 to 86, Accessibility 100, Best Practices 100, SEO 100
 - `/shop/eko-nights` — Performance 90, Accessibility 100, Best Practices 100, SEO 100
 - `/scent-finder` — Performance 95, Accessibility 100, Best Practices 100, SEO 100
 
-`/shop` Accessibility was 94 because `aria-pressed` was used on filter links, which is invalid on links. The chips now use `aria-current`. Re-measurement pending.
+`/shop` Accessibility was 94 because `aria-pressed` was used on filter links, which is invalid on links. The chips now use `aria-current`. Re-measured after the fix on 17 Nov 2026 (mobile, Incognito, deployed): Performance 85 to 86 across four runs, Accessibility 100, Best Practices 100, SEO 100. An earlier single run scored 95; Lighthouse varies between runs, so the range is the number to trust. Other pages are single runs.
 
 ## Known limits
 
