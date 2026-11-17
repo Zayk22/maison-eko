@@ -1,103 +1,95 @@
 # Maison Eko
 
-A demo perfume house storefront built for a portfolio. The storefront sells eight fictional fragrances, checks out via bank transfer and WhatsApp (no card processing), stores orders in a real Postgres database, and includes a single-owner admin dashboard for product, variant and order management.
+A demo storefront for a fictional Lagos perfume house, built around how many Nigerian shops actually sell: bank transfer and a WhatsApp handoff instead of a card form. Orders are real rows in a Postgres database, customers can track them, and a single owner manages products and order status from an admin dashboard.
 
-The product is the point. The demo notice is honest: no real orders are fulfilled, all bank details are demo-only, and the fragrances are fictional.
+This is a portfolio project. No real orders are fulfilled, the bank details are demo-only, and the fragrances are fictional.
 
-## Live
+**Live:** https://maison-eko.vercel.app/
 
-Deployed on Vercel: https://maison-eko.vercel.app/
+## What it does
+
+- Browse eight original fragrances, filter by scent family and time of day, sort by price.
+- Product pages with sizes, per-size pricing, stock state, and a scroll-driven scent pyramid (top, heart and base notes).
+- A three-question scent finder that scores answers against fragrance tags and returns a best match and a runner-up.
+- Cart drawer, checkout with Nigerian phone validation, a confirmation page with demo bank details, and a WhatsApp handoff link.
+- Order tracking by order number plus the phone used at checkout.
+- Owner-only admin: product and variant CRUD, order list with status filter, status updates with an event history.
 
 ## Stack
 
-- Next.js 16 (App Router, TypeScript strict)
-- Tailwind CSS v4 (CSS-first `@theme`, no `tailwind.config.js`)
-- Neon Postgres with Drizzle ORM (`@neondatabase/serverless` WebSocket `Pool` for interactive transactions)
-- Clerk for the owner dashboard, restricted to one user via `ADMIN_USER_ID`
-- `motion` (Framer Motion) for hero, product cards, page transitions and the cart total number roll
-- Plain CSS keyframes for the scent pyramid scroll story, the scent finder and the cart drawer open/close, chosen for reliability
-- `@radix-ui/react-dialog` for the cart drawer, mobile menu and admin mobile menu
-- `lucide-react` for icons
-- Vitest for unit tests, Playwright for the end-to-end checkout flow
+- Next.js 16 (App Router), React 19, TypeScript strict
+- Tailwind CSS v4 (CSS-first `@theme`)
+- Neon Postgres with Drizzle ORM; the `@neondatabase/serverless` WebSocket `Pool` for interactive transactions
+- Clerk for the owner login, restricted to one user ID
+- Zod for validation on every server action and API route
+- `motion` for the hero, product cards, page transitions and the cart total roll; plain CSS keyframes and direct scroll-driven DOM updates for the scent pyramid, the scent finder and the cart drawer open/close
+- Radix Dialog for the cart drawer and mobile menus
+- Vitest and Playwright
+- Hosted on Vercel
 
-## How the customer flow works
+## How checkout works
 
-1. The customer browses `/shop`, opens a product, picks a size, adds to cart.
-2. The cart drawer shows each line, subtotal, flat shipping (₦3,500) and total. Prices are always recomputed on the server during order creation; the client never sends prices.
-3. Checkout collects name, phone (Nigerian format, normalised to `+234...`), street, area, state, and an optional delivery note. The server combines the three address fields into a single `address` column.
-4. On submit, a single Postgres transaction guards stock with `UPDATE ... WHERE stock >= $qty RETURNING stock`. If any line is short, the whole transaction rolls back with a specific conflict list. If the generated order number collides (`23505` on `orders_order_number_unique`), the whole transaction retries with a new number, up to three times.
-5. The confirmation page reads the order directly from the database. It shows the order number, items, totals, demo bank details, and a "Send order on WhatsApp" button built from `NEXT_PUBLIC_WHATSAPP_NUMBER`. The button is hidden if the variable is unset, and the number is never shown as text.
-6. Tracking requires the order number plus the phone used at checkout. Wrong order number and wrong phone return the same generic error, so neither field can be probed independently.
+1. The cart stores only `{ variantId, quantity }`. The client never sends a price.
+2. On submit, the server validates the payload, normalises the phone to `+234...`, merges duplicate variants, and recomputes every price from the database.
+3. One Postgres transaction reserves stock with a guarded `UPDATE ... SET stock = stock - $qty WHERE id = $id AND stock >= $qty RETURNING stock`. If any line is short, the whole transaction rolls back and the customer sees which lines conflict.
+4. If the random order number (`ME-XXXXXX`, unambiguous alphabet) collides on the unique index, the whole transaction retries with a new number, up to three times.
+5. The confirmation page shows the order number, items, totals and demo bank details, never the phone or address. The WhatsApp button appears only if `NEXT_PUBLIC_WHATSAPP_NUMBER` is set.
+6. Tracking requires the order number and the phone. A wrong number and a wrong phone return the same generic message.
+
+Money is stored as integer kobo and parsed from decimal strings without floats.
 
 ## Security decisions
 
-- **Server-side pricing.** The cart stores only `{ variantId, quantity }`. Every price is looked up from the database inside the order transaction. A malicious client cannot submit a lower price.
-- **Owner authorisation is checked in every server context.** `src/proxy.ts` runs `clerkMiddleware()` on `/admin/*`, `/api/admin/*` and `/sign-in(.*)`. Every admin page, layout and server action calls `requireAdmin()` itself. A session cookie alone is never sufficient.
-- **Rate limiting on mutation endpoints only.** Order creation is limited to 8 per 10 minutes per IP and 3 per 10 minutes per normalised phone. Tracking is limited to 10 per 10 minutes per order number and 20 per 10 minutes per IP. The limiter is a Postgres table with a single-statement `INSERT ... ON CONFLICT DO UPDATE` that resets when the window expires. The write happens outside the order transaction so a rollback does not erase the count. Fail-closed for orders, fail-open for tracking, so a broken limiter never locks a customer out of viewing their own order.
-- **Secrets** live in `.env.local` (git-ignored) locally and in Vercel environment variables in production. `.env.example` documents every variable name with empty values. A leaked credential was scrubbed from history with `git filter-repo` and the Neon role password was rotated at the same time.
+- **Server-side pricing.** Prices come from the database inside the order transaction.
+- **Owner authorisation in every server context.** The Clerk proxy covers `/admin`, `/api/admin` and `/sign-in`, but every admin page, layout and server action also calls `requireAdmin()`, which compares the signed-in user to `ADMIN_USER_ID` and fails closed if it is missing. Clerk sign-ups are set to invite-only.
+- **Rate limiting.** A Postgres table with a single-statement upsert that resets the count when the window expires. Order creation: 8 per 10 minutes per IP and 3 per 10 minutes per phone. Tracking: 10 per 10 minutes per order number and 20 per 10 minutes per IP. The counter is written outside the order transaction so a rollback cannot erase it. It fails closed for orders and open for tracking.
+- **Order lifecycle.** Status changes use a conditional update (`WHERE status = $current`) in the same transaction as the restock, so a cancel restores stock exactly once, and every change is written to `order_events`.
+- **Secrets** live in `.env.local` (git-ignored) and in Vercel environment variables.
 
 ## Accessibility
 
-- WCAG 2.1 AA target. The `npm run check:contrast` script parses the `@theme` block in `globals.css`, computes WCAG contrast with the real gamma curve, and exits non-zero if any text pair fails 4.5:1. Ember is allowed for borders, icons, underlines and focus rings, never for text.
-- Every text/background pair on the site has a measured ratio. The current ratios are printed by the script and recorded in `PROJECT_STATE.md`.
-- Skip link, labelled landmarks (`aria-label="Primary"`, `aria-label="Footer"`), visible focus rings, 44 px minimum targets, `aria-live="polite"` on cart and status changes, and reduced-motion support throughout.
-- Large text is allowed at lower contrast (3:1) per WCAG 2.1. That is why "Eko Nights" (4.40 on its own accent) is fine for display headlines but not for body copy, and the site respects that.
+- `npm run check:contrast` reads the `@theme` block in `globals.css`, computes WCAG 2.1 contrast, and exits non-zero on any failing text pair. The ember accent is used for borders, icons, underlines and focus rings only, never for text.
+- Skip link, labelled landmarks, visible focus rings, 44 px touch targets, `aria-live` regions for cart and tracking updates, and `prefers-reduced-motion` respected by the animations.
 
 ## Testing
 
-- `npm run test` runs Vitest. Last measured: 16 files, 255 tests passed.
-- `npm run e2e` runs the Playwright end-to-end test. The test runs against the shared Neon database, cleans up after itself in `afterAll`, and refuses to run if `NODE_ENV=production`. The production guard is `NODE_ENV` only.
-- Teardown restores stock for the test order, deletes the order (cascades to items and events), and clears rate-limit rows for the test keys. Re-runs are safe because the phone rate-limit key is fixed and the order-number key is fresh.
-- The end-to-end test covers: browse → open product → add to cart → checkout → confirm with an `ME-XXXXXX` number → track with the same phone.
-- Last measured `npm run e2e`: 1 test passed in 18.7s.
+- `npm run test`: Vitest. Last run: 16 files, 255 tests passed. Covers money, phone, order totals, status transitions, stock logic, order numbers, rate-limit counting, tracking verification, Zod schemas, colour contrast and the scent finder scoring (including that every fragrance can be the best match).
+- `npm run e2e`: one Playwright test covering browse, add to cart, checkout, confirmation and tracking. It runs against the shared Neon database, deletes the test order and restores stock afterwards, and refuses to run when `NODE_ENV=production`.
 
-## Measured scores (17 Nov 2026)
+## Measured Lighthouse scores
 
-Lighthouse mobile on the deployed site, Incognito, no extensions. `/shop` was measured four times after the `aria-current` fix to capture the variability; the other pages are single runs.
+Mobile preset, deployed site, Incognito with no extensions, 17 Nov 2026. Scores vary between runs.
 
-- `/` — Performance 89, Accessibility 100, Best Practices 100, SEO 100
-- `/shop` — Performance 85 to 86, Accessibility 100, Best Practices 100, SEO 100
-- `/shop/eko-nights` — Performance 90, Accessibility 100, Best Practices 100, SEO 100
-- `/scent-finder` — Performance 95, Accessibility 100, Best Practices 100, SEO 100
+| Page | Performance | Accessibility | Best Practices | SEO |
+|---|---|---|---|---|
+| `/` | 89 | 100 | 100 | 100 |
+| `/shop` | 85 to 86 (four runs) | 100 | 100 | 100 |
+| `/shop/eko-nights` | 90 | 100 | 100 | 100 |
+| `/scent-finder` | 95 | 100 | 100 | 100 |
 
-`/shop` Accessibility was 94 because `aria-pressed` was used on filter links, which is invalid on links. The chips now use `aria-current`. Re-measured after the fix on 17 Nov 2026 (mobile, Incognito, deployed): Performance 85 to 86 across four runs, Accessibility 100, Best Practices 100, SEO 100. An earlier single run scored 95; Lighthouse varies between runs, so the range is the number to trust. Other pages are single runs.
+`/shop` Accessibility was 94 until the filter links stopped using `aria-pressed` (invalid on links) and switched to `aria-current`. Pages other than `/shop` are single runs.
 
 ## Known limits
 
-- The scent finder quiz is keyed to the eight seed fragrances by slug. Admin-created products do not appear in the quiz until added to `FRAGRANCE_INTENSITY` in `src/lib/scent-config.ts`.
-- Admin stock edits can race with live orders: the admin update wins. There is no optimistic locking on stock in the admin UI in v1.
-- `/api/cart/lookup` returns exact stock numbers to anonymous callers. Planned cleanup: return an availability flag instead.
-- `NEXT_PUBLIC_WHATSAPP_NUMBER` is visible in the page source, because `NEXT_PUBLIC_*` variables ship to the browser by design. The WhatsApp handoff link is built on the client.
-- `npm audit` reports moderate advisories in dev tooling. The suggested fixes downgrade those packages, which is unacceptable. The advisories are accepted and re-checked at each release.
-- No customer accounts, no card payments, no reviews, no wishlists, no coupons, no multi-currency, no email sending, no multi-merchant support.
+- The scent finder is keyed to the eight seed fragrances. Products created in the admin do not appear in the quiz.
+- Admin stock edits can race with live orders; the last write wins.
+- `/api/cart/lookup` returns exact stock to anonymous callers. An availability flag would be better.
+- `NEXT_PUBLIC_WHATSAPP_NUMBER` is visible in the page source because `NEXT_PUBLIC_*` values ship to the browser.
+- The e2e test shares the production database.
+- `npm audit` reports moderate advisories in dev tooling (esbuild via `drizzle-kit`, minimatch via the ESLint packages). The suggested fixes would downgrade those packages, so they are accepted for now.
+- Out of scope: customer accounts, card payments, reviews, wishlists, coupons, multi-currency, email, multiple merchants.
+- Product images are generated SVG bottles; real photography and a designed logo are not yet in place.
 
 ## Local development
 
-Clone the repository, run `npm install`, copy `.env.example` to `.env.local`, and fill in the required environment variable names below. Then run `npm run dev` and open http://localhost:3000.
-
-Required environment variable names (values not shown):
-
-- `NEXT_PUBLIC_SITE_URL`
-- `DATABASE_URL`
-- `DATABASE_URL_UNPOOLED`
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-- `CLERK_SECRET_KEY`
-- `ADMIN_USER_ID`
-- `NEXT_PUBLIC_WHATSAPP_NUMBER`
-- `DEMO_BANK_NAME`
-- `DEMO_ACCOUNT_NAME`
-- `DEMO_ACCOUNT_NUMBER`
-
-Database:
-
 ```powershell
-npm run db:generate
+npm install
+Copy-Item .env.example .env.local
 npm run db:migrate
 npm run db:seed
+npm run dev
 ```
 
-The seed is idempotent for the store row but overwrites name, description, pyramid, tags, accent and price on existing products. Do not re-run it after the admin dashboard exists if you have made manual edits.
+Required variables (names only): `NEXT_PUBLIC_SITE_URL`, `DATABASE_URL` (pooled), `DATABASE_URL_UNPOOLED` (direct, used by Drizzle Kit), `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `ADMIN_USER_ID`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL`, `NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL`, `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `DEMO_BANK_NAME`, `DEMO_ACCOUNT_NAME`, `DEMO_ACCOUNT_NUMBER`.
 
-## License
-
-This is a portfolio project. All code and content are original.
+Re-running `db:seed` overwrites the name, description, notes, tags, colour and price of the seeded products, so don't run it after editing them in the admin.
