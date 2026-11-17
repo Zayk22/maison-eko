@@ -45,6 +45,14 @@ function clampQuantity(q: number): number {
   return n;
 }
 
+function writeStorage(lines: CartLine[]): void {
+  try {
+    window.localStorage.setItem(CART_STORAGE_KEY, serializeCart(lines));
+  } catch {
+    // Quota or storage disabled; in-memory state remains valid.
+  }
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -67,15 +75,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!hydratedRef.current) return;
-    try {
-      window.localStorage.setItem(CART_STORAGE_KEY, serializeCart(lines));
-    } catch {
-      // Quota or storage disabled; in-memory state remains valid.
-    }
-  }, [lines]);
-
-  useEffect(() => {
     function onStorage(event: StorageEvent) {
       if (event.key !== CART_STORAGE_KEY) return;
       if (event.storageArea !== window.localStorage) return;
@@ -91,14 +90,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const q = clampQuantity(quantity);
       setLines((prev) => {
         const existing = prev.find((l) => l.variantId === variantId);
-        if (existing) {
-          return prev.map((l) =>
-            l.variantId === variantId
-              ? { ...l, quantity: clampQuantity(l.quantity + q) }
-              : l,
-          );
-        }
-        return [...prev, { variantId, quantity: q }];
+        const next = existing
+          ? prev.map((l) =>
+              l.variantId === variantId
+                ? { ...l, quantity: clampQuantity(l.quantity + q) }
+                : l,
+            )
+          : [...prev, { variantId, quantity: q }];
+        if (hydratedRef.current) writeStorage(next);
+        return next;
       });
       if (label) {
         announcementKeyRef.current += 1;
@@ -113,25 +113,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const setQuantity = useCallback((variantId: string, quantity: number) => {
     const q = clampQuantity(quantity);
-    setLines((prev) =>
-      prev.map((l) => (l.variantId === variantId ? { ...l, quantity: q } : l)),
-    );
+    setLines((prev) => {
+      const next = prev.map((l) =>
+        l.variantId === variantId ? { ...l, quantity: q } : l,
+      );
+      if (hydratedRef.current) writeStorage(next);
+      return next;
+    });
   }, []);
 
   const removeItem = useCallback((variantId: string) => {
-    setLines((prev) => prev.filter((l) => l.variantId !== variantId));
+    setLines((prev) => {
+      const next = prev.filter((l) => l.variantId !== variantId);
+      if (hydratedRef.current) writeStorage(next);
+      return next;
+    });
   }, []);
 
   const clear = useCallback(() => {
-    setLines([]);
+    setLines(() => {
+      if (hydratedRef.current) writeStorage([]);
+      return [];
+    });
   }, []);
 
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
-  const clearAnnouncement = useCallback(
-    () => setLastAnnouncement(null),
-    [],
-  );
+  const clearAnnouncement = useCallback(() => setLastAnnouncement(null), []);
 
   const value = useMemo<CartContextValue>(() => {
     const itemCount = lines.reduce((sum, l) => sum + l.quantity, 0);

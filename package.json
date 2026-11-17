@@ -14,7 +14,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/data/seed.ts",
     "images:og": "node scripts/generate-og-image.mjs",
-    "images:compress": "node scripts/compress-images.mjs"
+    "images:compress": "node scripts/compress-images.mjs",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.25",
@@ -29,6 +30,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/postcss": "^4.3.5",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^24.19.2",
