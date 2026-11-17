@@ -14,8 +14,8 @@ Deployed on Vercel: https://maison-eko.vercel.app/
 - Tailwind CSS v4 (CSS-first `@theme`, no `tailwind.config.js`)
 - Neon Postgres with Drizzle ORM (`@neondatabase/serverless` WebSocket `Pool` for interactive transactions)
 - Clerk for the owner dashboard, restricted to one user via `ADMIN_USER_ID`
-- `motion` (Framer Motion) for hero, product cards and page transitions
-- Plain CSS keyframes and direct DOM updates for the scent pyramid scroll story, the scent finder, and the cart drawer totals, where the library has proven fragile under Next 16 / Turbopack
+- `motion` (Framer Motion) for hero, product cards, page transitions and the cart total number roll
+- Plain CSS keyframes for the scent pyramid scroll story, the scent finder and the cart drawer open/close, chosen for reliability
 - `@radix-ui/react-dialog` for the cart drawer, mobile menu and admin mobile menu
 - `lucide-react` for icons
 - Vitest for unit tests, Playwright for the end-to-end checkout flow
@@ -45,40 +45,48 @@ Deployed on Vercel: https://maison-eko.vercel.app/
 
 ## Testing
 
-- `npm run test` runs Vitest.
-- `npm run e2e` runs the Playwright end-to-end test. The test creates a real order in the Neon database, then deletes it and restores stock in `afterAll`. It refuses to run if `NODE_ENV=production` or `DATABASE_URL` contains `prod`. Re-runs are safe because the phone rate-limit key is fixed and the order-number key is fresh; teardown clears both.
+- `npm run test` runs Vitest. Last measured: 16 files, 255 tests passed.
+- `npm run e2e` runs the Playwright end-to-end test. The test runs against the shared Neon database, cleans up after itself in `afterAll`, and refuses to run if `NODE_ENV=production`. The production guard is `NODE_ENV` only.
+- Teardown restores stock for the test order, deletes the order (cascades to items and events), and clears rate-limit rows for the test keys. Re-runs are safe because the phone rate-limit key is fixed and the order-number key is fresh.
 - The end-to-end test covers: browse → open product → add to cart → checkout → confirm with an `ME-XXXXXX` number → track with the same phone.
+- Last measured `npm run e2e`: 1 test passed in 18.7s.
 
 ## Measured scores (17 Nov 2026)
 
-Lighthouse mobile on the deployed home page, Incognito, no extensions, single run:
+Lighthouse mobile on the deployed site, Incognito, no extensions, single run per page:
 
-- Performance: 89
-- Accessibility: 100
-- Best Practices: 100
-- SEO: 100
+- `/` — Performance 89, Accessibility 100, Best Practices 100, SEO 100
+- `/shop` — Performance 95, Accessibility 94, Best Practices 100, SEO 100
+- `/shop/eko-nights` — Performance 90, Accessibility 100, Best Practices 100, SEO 100
+- `/scent-finder` — Performance 95, Accessibility 100, Best Practices 100, SEO 100
 
-Measured pages: `/`. Other pages are not yet measured; the numbers above are for the home page only.
+`/shop` Accessibility was 94 because `aria-pressed` was used on filter links, which is invalid on links. The chips now use `aria-current`. Re-measurement pending.
 
 ## Known limits
 
 - The scent finder quiz is keyed to the eight seed fragrances by slug. Admin-created products do not appear in the quiz until added to `FRAGRANCE_INTENSITY` in `src/lib/scent-config.ts`.
 - Admin stock edits can race with live orders: the admin update wins. There is no optimistic locking on stock in the admin UI in v1.
 - `/api/cart/lookup` returns exact stock numbers to anonymous callers. Planned cleanup: return an availability flag instead.
-- `npm audit` reports 11 moderate advisories in dev tooling (esbuild via @esbuild-kit inside drizzle-kit; minimatch via typescript-eslint and eslint-config-next). The suggested fixes downgrade those packages, which is unacceptable. The advisories are accepted, re-checked at each release.
+- `NEXT_PUBLIC_WHATSAPP_NUMBER` is visible in the page source, because `NEXT_PUBLIC_*` variables ship to the browser by design. The WhatsApp handoff link is built on the client.
+- `npm audit` reports moderate advisories in dev tooling. The suggested fixes downgrade those packages, which is unacceptable. The advisories are accepted and re-checked at each release.
 - No customer accounts, no card payments, no reviews, no wishlists, no coupons, no multi-currency, no email sending, no multi-merchant support.
 
 ## Local development
 
-```powershell
-git clone https://github.com/Zayk22/maison-eko.git
-cd maison-eko
-npm install
-Copy-Item .env.example .env.local
-npm run dev
-```
+Clone the repository, run `npm install`, copy `.env.example` to `.env.local`, and fill in the required environment variable names below. Then run `npm run dev` and open http://localhost:3000.
 
-Fill in the variables in `.env.local`, then open http://localhost:3000.
+Required environment variable names (values not shown):
+
+- `NEXT_PUBLIC_SITE_URL`
+- `DATABASE_URL`
+- `DATABASE_URL_UNPOOLED`
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY`
+- `ADMIN_USER_ID`
+- `NEXT_PUBLIC_WHATSAPP_NUMBER`
+- `DEMO_BANK_NAME`
+- `DEMO_ACCOUNT_NAME`
+- `DEMO_ACCOUNT_NUMBER`
 
 Database:
 

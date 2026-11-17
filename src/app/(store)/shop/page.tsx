@@ -110,6 +110,7 @@ export default async function ShopPage({
           <div className="flex overflow-x-auto snap-x snap-mandatory md:flex-wrap gap-2 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Link
               href={buildUrl(currentParams, { scent: null })}
+              aria-current={!selectedScent ? "true" : undefined}
               className={
                 "snap-start shrink-0 inline-flex items-center min-h-11 px-4 rounded-full border text-sm " +
                 (!selectedScent
@@ -117,7 +118,6 @@ export default async function ShopPage({
                   : "bg-transparent text-ink border-border hover:border-ink") +
                 " focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               }
-              aria-pressed={!selectedScent}
             >
               All
             </Link>
@@ -129,6 +129,7 @@ export default async function ShopPage({
                   href={buildUrl(currentParams, {
                     scent: isActive ? null : scent,
                   })}
+                  aria-current={isActive ? "true" : undefined}
                   className={
                     "snap-start shrink-0 inline-flex items-center min-h-11 px-4 rounded-full border text-sm capitalize " +
                     (isActive
@@ -136,7 +137,6 @@ export default async function ShopPage({
                       : "bg-transparent text-ink border-border hover:border-ink") +
                     " focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
                   }
-                  aria-pressed={isActive}
                 >
                   {scent}
                 </Link>
@@ -150,6 +150,7 @@ export default async function ShopPage({
           <div className="flex overflow-x-auto snap-x snap-mandatory md:flex-wrap gap-2 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Link
               href={buildUrl(currentParams, { when: null })}
+              aria-current={!selectedWhen ? "true" : undefined}
               className={
                 "snap-start shrink-0 inline-flex items-center min-h-11 px-4 rounded-full border text-sm " +
                 (!selectedWhen
@@ -157,7 +158,6 @@ export default async function ShopPage({
                   : "bg-transparent text-ink border-border hover:border-ink") +
                 " focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               }
-              aria-pressed={!selectedWhen}
             >
               All
             </Link>
@@ -169,6 +169,7 @@ export default async function ShopPage({
                   href={buildUrl(currentParams, {
                     when: isActive ? null : when,
                   })}
+                  aria-current={isActive ? "true" : undefined}
                   className={
                     "snap-start shrink-0 inline-flex items-center min-h-11 px-4 rounded-full border text-sm capitalize " +
                     (isActive
@@ -176,7 +177,6 @@ export default async function ShopPage({
                       : "bg-transparent text-ink border-border hover:border-ink") +
                     " focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
                   }
-                  aria-pressed={isActive}
                 >
                   {when}
                 </Link>
